@@ -1,0 +1,39 @@
+Project Nurse Ratchet
+Copyright 2026 the Project Nurse Ratchet contributors
+
+This product is licensed under the Apache License, Version 2.0 (the "License").
+You may not use the files in this project except in compliance with the License.
+A copy of the License is in the file LICENSE.
+
+Unless required by applicable law or agreed to in writing, software distributed
+under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+CONDITIONS OF ANY KIND, either express or implied. See the License for the
+specific language governing permissions and limitations under the License.
+
+--------------------------------------------------------------------------
+Attribution notes
+
+The name Nurse Ratchet refers to the character in One Flew Over the Cuckoo's Nest:
+the figure who administers care as control, in a register reasonable enough that
+the coercion is difficult to point at. The name is the warning, not the aspiration.
+
+ELIZA is a SEPARATE project in the Azazael tree -- the forensic investigation
+suite -- with its own package and its own release gate. It is not this package.
+
+Separately, the name ELIZA also refers to Joseph Weizenbaum's 1966 program
+(Communications of the ACM, 9(1):36-45). No code from that program is included
+here; that reference is to the cautionary lesson about systems that are trusted
+because they appear to listen.
+
+The crisis resources named in `nurse_ratchet/psyche/rt_agent.py` (988 Suicide & Crisis
+Lifeline, US) are quoted as public information. This project is not affiliated
+with, endorsed by, or acting on behalf of that service or any health provider.
+
+The labelled corpus in `nurse_ratchet/psyche/data/triage_corpus.jsonl` contains invented
+utterances authored for this project. It contains no transcript, quotation or
+paraphrase of any real person's words, and it must not be treated as a clinical
+instrument or as a validation set.
+
+No third-party runtime dependency is bundled. The Contributor Covenant text in
+CODE_OF_CONDUCT.md is used under CC BY 4.0 with attribution retained in the
+Attribution section at the end of that file.

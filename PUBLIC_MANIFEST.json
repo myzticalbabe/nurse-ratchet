@@ -1,0 +1,369 @@
+{
+ "project": "nurse-ratchet",
+ "version": "0.1.0",
+ "license": "Apache-2.0",
+ "status": "PRE-PUBLICATION",
+ "summary": "The behavioral package of the Azazael tree: a therapeutic-agent loop, the psychological network it reasons over, the compiled-inference layer that makes it fast, the construct battery that can finally measure a person, and the evaluation instruments that grade all four. Its intended role is the live counselor -- the continuity layer of addiction and mental-health care -- and docs/explanation/live-counselors.md states both that aim and the requirements it does not yet meet. Published with its limitations, including a measured crisis-router recall that ranges from 0.83 to 0.18 across three self-authored holdouts -- a spread that says the single number does not exist yet.",
+ "ship_roots": [
+  "Project_Nurse_Ratchet"
+ ],
+ "ship": [
+  {
+   "from": "../src/PSYCHE/__init__.py",
+   "to": "nurse_ratchet/psyche/__init__.py",
+   "kind": "code"
+  },
+  {
+   "from": "../src/PSYCHE/affect.py",
+   "to": "nurse_ratchet/psyche/affect.py",
+   "kind": "code"
+  },
+  {
+   "from": "../src/PSYCHE/traits.py",
+   "to": "nurse_ratchet/psyche/traits.py",
+   "kind": "code"
+  },
+  {
+   "from": "../src/PSYCHE/network.py",
+   "to": "nurse_ratchet/psyche/network.py",
+   "kind": "code"
+  },
+  {
+   "from": "../src/PSYCHE/intuition.py",
+   "to": "nurse_ratchet/psyche/intuition.py",
+   "kind": "code"
+  },
+  {
+   "from": "../src/PSYCHE/rt_agent.py",
+   "to": "nurse_ratchet/psyche/rt_agent.py",
+   "kind": "code"
+  },
+  {
+   "from": "../src/PSYCHE/rt_channel.py",
+   "to": "nurse_ratchet/psyche/rt_channel.py",
+   "kind": "code"
+  },
+  {
+   "from": "../src/PSYCHE/data/triage_corpus.jsonl",
+   "to": "nurse_ratchet/psyche/data/triage_corpus.jsonl",
+   "kind": "data"
+  },
+  {
+   "from": "../tools/triage_eval.py",
+   "to": "tools/triage_eval.py",
+   "kind": "instrument"
+  },
+  {
+   "from": "../tools/psyche_fit_pams.py",
+   "to": "tools/psyche_fit_pams.py",
+   "kind": "instrument"
+  },
+  {
+   "from": "../tools/nurse_ratchet_release_gate.py",
+   "to": "tools/nurse_ratchet_release_gate.py",
+   "kind": "instrument"
+  },
+  {
+   "from": "../tests/test_psyche_network.py",
+   "to": "tests/test_psyche_network.py",
+   "kind": "test"
+  },
+  {
+   "from": "../tests/test_psyche_intuition.py",
+   "to": "tests/test_psyche_intuition.py",
+   "kind": "test"
+  },
+  {
+   "from": "../tests/test_psyche_rt_agent.py",
+   "to": "tests/test_psyche_rt_agent.py",
+   "kind": "test"
+  },
+  {
+   "from": "../tests/test_psyche_rt_channel.py",
+   "to": "tests/test_psyche_rt_channel.py",
+   "kind": "test"
+  },
+  {
+   "from": "../tests/test_psyche_affect.py",
+   "to": "tests/test_psyche_affect.py",
+   "kind": "test"
+  },
+  {
+   "from": "../tests/test_psyche_traits.py",
+   "to": "tests/test_psyche_traits.py",
+   "kind": "test"
+  },
+  {
+   "from": "../tests/test_triage_eval.py",
+   "to": "tests/test_triage_eval.py",
+   "kind": "test"
+  },
+  {
+   "from": "../tests/test_psyche_fit_pams.py",
+   "to": "tests/test_psyche_fit_pams.py",
+   "kind": "test"
+  },
+  {
+   "from": "README.md",
+   "to": "README.md",
+   "kind": "governance"
+  },
+  {
+   "from": "LICENSE",
+   "to": "LICENSE",
+   "kind": "governance"
+  },
+  {
+   "from": "NOTICE",
+   "to": "NOTICE",
+   "kind": "governance"
+  },
+  {
+   "from": "CONTRIBUTING.md",
+   "to": "CONTRIBUTING.md",
+   "kind": "governance"
+  },
+  {
+   "from": "CODE_OF_CONDUCT.md",
+   "to": "CODE_OF_CONDUCT.md",
+   "kind": "governance"
+  },
+  {
+   "from": "SECURITY.md",
+   "to": "SECURITY.md",
+   "kind": "governance"
+  },
+  {
+   "from": "CHANGELOG.md",
+   "to": "CHANGELOG.md",
+   "kind": "governance"
+  },
+  {
+   "from": "CITATION.cff",
+   "to": "CITATION.cff",
+   "kind": "governance"
+  },
+  {
+   "from": "DISCLOSURE_POLICY.md",
+   "to": "DISCLOSURE_POLICY.md",
+   "kind": "governance"
+  },
+  {
+   "from": "PUBLIC_MANIFEST.json",
+   "to": "PUBLIC_MANIFEST.json",
+   "kind": "governance"
+  },
+  {
+   "from": "docs/index.md",
+   "to": "docs/index.md",
+   "kind": "docs"
+  },
+  {
+   "from": "docs/reference/psyche.md",
+   "to": "docs/reference/psyche.md",
+   "kind": "docs"
+  },
+  {
+   "from": "docs/explanation/why-nurse-ratchet.md",
+   "to": "docs/explanation/why-nurse-ratchet.md",
+   "kind": "docs"
+  },
+  {
+   "from": "docs/explanation/live-counselors.md",
+   "to": "docs/explanation/live-counselors.md",
+   "kind": "docs"
+  },
+  {
+   "from": ".github/PULL_REQUEST_TEMPLATE.md",
+   "to": ".github/PULL_REQUEST_TEMPLATE.md",
+   "kind": "governance"
+  },
+  {
+   "from": ".github/ISSUE_TEMPLATE/bug_report.yml",
+   "to": ".github/ISSUE_TEMPLATE/bug_report.yml",
+   "kind": "governance"
+  },
+  {
+   "from": ".github/ISSUE_TEMPLATE/feature_request.yml",
+   "to": ".github/ISSUE_TEMPLATE/feature_request.yml",
+   "kind": "governance"
+  },
+  {
+   "from": ".github/ISSUE_TEMPLATE/config.yml",
+   "to": ".github/ISSUE_TEMPLATE/config.yml",
+   "kind": "governance"
+  },
+  {
+   "from": "../src/PSYCHE/data/affect_bridge.json",
+   "to": "nurse_ratchet/psyche/data/affect_bridge.json",
+   "kind": "data"
+  },
+  {
+   "from": "../tools/fit_affect_bridge.py",
+   "to": "tools/fit_affect_bridge.py",
+   "kind": "instrument"
+  },
+  {
+   "from": "../tests/test_psyche_bridge_fit.py",
+   "to": "tests/test_psyche_bridge_fit.py",
+   "kind": "test"
+  },
+  {
+   "from": "pyproject.toml",
+   "to": "pyproject.toml",
+   "kind": "packaging"
+  },
+  {
+   "from": "tools/publicize.py",
+   "to": "tools/publicize.py",
+   "kind": "instrument"
+  },
+  {
+   "from": "certification.json",
+   "to": "certification.json",
+   "kind": "data"
+  },
+  {
+   "from": "tools/certification_bar.py",
+   "to": "tools/certification_bar.py",
+   "kind": "instrument"
+  },
+  {
+   "from": "tests/test_certification_bar.py",
+   "to": "tests/test_certification_bar.py",
+   "kind": "test"
+  },
+  {
+   "from": "docs/tutorial.md",
+   "to": "docs/tutorial.md",
+   "kind": "docs"
+  },
+  {
+   "from": ".github/workflows/ci.yml",
+   "to": ".github/workflows/ci.yml",
+   "kind": "governance"
+  },
+{
+    "from": "MANIFEST_NOTES.md",
+    "to": "MANIFEST_NOTES.md",
+    "kind": "docs"
+  },
+  {
+    "from": "HARDWARE.md",
+    "to": "HARDWARE.md",
+    "kind": "docs"
+  },
+  {
+    "from": "requiem.py",
+    "to": "requiem.py",
+    "kind": "instrument"
+  },
+  {
+   "from": ".gitignore",
+   "to": ".gitignore",
+   "kind": "governance"
+  },
+  {
+   "from": "../src/PSYCHE/constructions.py",
+   "to": "nurse_ratchet/psyche/constructions.py",
+   "kind": "code"
+  },
+  {
+   "from": "../src/PSYCHE/elicitation.py",
+   "to": "nurse_ratchet/psyche/elicitation.py",
+   "kind": "code"
+  },
+  {
+   "from": "../tools/elicit.py",
+   "to": "tools/elicit.py",
+   "kind": "instrument"
+  },
+  {
+   "from": "../tests/test_psyche_constructions.py",
+   "to": "tests/test_psyche_constructions.py",
+   "kind": "test"
+  },
+  {
+   "from": "../tests/test_psyche_elicitation.py",
+   "to": "tests/test_psyche_elicitation.py",
+   "kind": "test"
+  }
+ ],
+ "never_ship": [
+  {
+   "glob": "*.bcc_audit/*",
+   "why": "raw forensic evidence: source documents, caches, screenshots"
+  },
+  {
+   "glob": "*_evidence*.json",
+   "why": "assertion-to-source citational payloads for named parties"
+  },
+  {
+   "glob": "*_linkage*.json",
+   "why": "entity-resolution output naming private individuals"
+  },
+  {
+   "glob": "bcc_*.json",
+   "why": "investigation intermediate naming officers, tenants and clinicians"
+  },
+  {
+   "glob": "bcc_*.py",
+   "why": "investigation scripts with hard-coded case identifiers"
+  },
+  {
+   "glob": "BCC_*.html",
+   "why": "rendered findings about identified organisations"
+  },
+  {
+   "glob": "*findings*.md",
+   "why": "narrative findings about identified people"
+  },
+  {
+   "glob": "*findings*.html",
+   "why": "rendered findings about identified people"
+  },
+  {
+   "glob": "*person*.json",
+   "why": "person-level records"
+  },
+  {
+   "glob": "SIGNED_*",
+   "why": "executed legal instruments"
+  },
+  {
+   "glob": "*.eml",
+   "why": "correspondence"
+  },
+  {
+   "glob": "*.pdf",
+   "why": "primary documents: ship the quote and its hash, not the file"
+  },
+  {
+   "glob": "00_raw/*",
+   "why": "raw fetch output, unsanitised"
+  },
+  {
+   "glob": "*.zip",
+   "why": "archives of primary documents"
+  }
+ ],
+ "deny_substrings": [
+  "bcc_audit",
+  "REINVESTIGATION",
+  "FETCH_LOG",
+  "edge_proof_ledger",
+  "identity_tiebreak",
+  "new_sources_log"
+ ],
+ "rationale": {
+  "why_allowlist": "A deny-list alone fails open: a new evidence directory ships unless someone remembers to add it. A manifest fails closed, and the gate refuses a path that is not declared.",
+  "why_never_ship_evidence": "This project's method is publishable; the allegations inside its original case are not. Named individuals in a corpus of mental-health, tenancy and employment records are not experiment data, and no licence can make republishing them lawful or decent. The methodology, the instruments and the aggregate counts ship; the primary documents do not. Ship the quote and its hash, and let a verifier re-fetch.",
+  "what_a_reader_can_verify_instead": "Every instrument in this repository runs against data the reader supplies. The evaluation numbers are reproducible from the labelled corpus; the forensic method is reproducible from its protocol documents."
+ },
+ "install": {
+  "layout": "nurse_ratchet/psyche/* is materialised from ../src/PSYCHE by tools/publicize.py, which rewrites the package name and VERIFIES the result imports with only the public tree on sys.path.",
+  "command": "python tools/publicize.py && python -m pip install .",
+  "why_not_a_verbatim_copy": "Source modules import PSYCHE.affect; a verbatim copy installs cleanly and fails on first import -- in the published artifact, after the push.",
+  "generated_not_committed": "nurse_ratchet/psyche/* is gitignored and produced at build time. Committing it would create a second copy that drifts silently."
+ }
+}

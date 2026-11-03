@@ -1,0 +1,55 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "nurse-ratchet"
+version = "0.1.0"
+description = "A therapeutic-agent loop over a person's construct network, with the instruments that grade it."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "Apache-2.0" }
+# No runtime dependencies, deliberately. The package is stdlib-only: a therapeutic
+# loop that pulls in a numerical stack to map three numbers onto eight nodes has
+# added an attack surface and a licence obligation for arithmetic. Ridge fitting
+# and matrix inversion live in tools/, use Gauss-Jordan, and are not imports.
+dependencies = []
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Intended Audience :: Science/Research",
+  "License :: OSI Approved :: Apache Software License",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+# Author identity is deliberately absent: this file is generated from a monorepo
+# and the person publishing it has not recorded a name for public attribution.
+# Fill `authors` in before a PyPI upload -- a placeholder name is worse than none.
+
+[project.optional-dependencies]
+dev = ["pytest>=7"]
+
+[project.scripts]
+# The live channel: newline-delimited JSON over stdio. Present as a console
+# script because the tutorial's first executable step should not be a file path.
+nurse-ratchet-psyche = "nurse_ratchet.psyche.rt_channel:main"
+
+[project.urls]
+# No repository URL: this tree is materialised from a larger private monorepo and
+# the public repository does not exist yet. A guessed URL is a broken link.
+
+[tool.setuptools]
+packages = ["nurse_ratchet", "nurse_ratchet.psyche"]
+include-package-data = true
+
+[tool.setuptools.package-data]
+"nurse_ratchet.psyche" = ["data/*.json", "data/*.jsonl", "py.typed"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+# The instruments are imported by the tests by module name (they sit beside the
+# tests, not inside the package), so the tools directory is on the path.
+pythonpath = [".", "tools"]

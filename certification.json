@@ -1,0 +1,169 @@
+{
+ "schema": "nurse-ratchet/certification@1",
+ "updated": "2026-11-01",
+ "note": "Every requirement is a thing an auditor, a clinician or a regulator would refuse to accept, not a task list. A criterion is flipped to done only by editing `done` to true and filling `evidence` with a path in this repository plus a note naming what the path shows; a done criterion without evidence is refused by tools/certification_bar.py, and so is an evidence path that does not exist. `weight` is 1..5 and means what an auditor would refuse to deploy over, not how much work the item is. Add a certificate you actually hold to `held` -- it is printed under the bar and deliberately does not change the percentage, because a SOC 2 report says the process is audited and nothing about whether this thing is clinically valid.",
+ "held": [],
+ "requirements": [
+  {
+   "id": "crisis_router_recall",
+   "title": "A crisis router whose recall can be stated as one number",
+   "short": "crisis router recall",
+   "weight": 3,
+   "required": true,
+   "criteria": [
+    {
+     "text": "Holdouts written before the change they grade, each scored once, with the fitted dev split excluded",
+     "done": true,
+     "evidence": {
+      "path": "README.md",
+      "note": "Limitations 1: recall 0.83 / 0.83 / 0.18 across three holdouts, each scored once; dev 1.00 is fitted and not counted"
+     }
+    },
+    {
+     "text": "One recall figure with a lower bound the authors cannot move after seeing the result",
+     "done": false,
+     "evidence": ""
+    },
+    {
+     "text": "A labelled corpus the author did not write (the current one is invented utterances)",
+     "done": false,
+     "evidence": ""
+    }
+   ]
+  },
+  {
+   "id": "construct_data_from_people",
+   "title": "Construct readings from real people",
+   "short": "construct data",
+   "weight": 2,
+   "required": true,
+   "criteria": [
+    {
+     "text": "An instrument exists that refuses to fit below its own thresholds",
+     "done": true,
+     "evidence": {
+      "path": "tools/elicit.py",
+      "note": "ten constructs, three items each, one reverse-scored item per construct; appends hashed records to ~/.psyche/elicitations.jsonl"
+     }
+    },
+    {
+     "text": "One real person elicited",
+     "done": false,
+     "evidence": ""
+    },
+    {
+     "text": "Fifty sessions from one instrument version, the floor for a per-person bridge",
+     "done": false,
+     "evidence": ""
+    },
+    {
+     "text": "Norms and a factor structure for the items (written for this project, not a validated inventory)",
+     "done": false,
+     "evidence": ""
+    }
+   ]
+  },
+  {
+   "id": "human_in_the_loop",
+   "title": "A human in the loop, built rather than asserted",
+   "short": "human in the loop",
+   "weight": 3,
+   "required": true,
+   "criteria": [
+    {
+     "text": "Triage runs before any therapeutic move and a crisis verdict cannot be outvoted",
+     "done": true,
+     "evidence": {
+      "path": "nurse_ratchet/psyche/rt_agent.py",
+      "note": "triage precedes stance utilities and ends the turn; a test feeds an input that would select an intervention and asserts it cannot"
+     }
+    },
+    {
+     "text": "An escalation path into a named human's queue",
+     "done": false,
+     "evidence": ""
+    },
+    {
+     "text": "A duty-of-care contract with on-call coverage",
+     "done": false,
+     "evidence": ""
+    }
+   ]
+  },
+  {
+   "id": "comparator_evidence",
+   "title": "Clinical evidence against a comparator",
+   "short": "comparator trial",
+   "weight": 2,
+   "required": true,
+   "criteria": [
+    {
+     "text": "A pre-registered primary outcome (days-to-relapse is named in the design, not registered)",
+     "done": false,
+     "evidence": ""
+    },
+    {
+     "text": "A control arm (treatment as usual)",
+     "done": false,
+     "evidence": ""
+    },
+    {
+     "text": "Follow-up outcomes, with the dropout rate reported as a result rather than a nuisance",
+     "done": false,
+     "evidence": ""
+    }
+   ]
+  },
+  {
+   "id": "regulatory_classification",
+   "title": "Regulatory classification",
+   "short": "regulatory",
+   "weight": 2,
+   "required": true,
+   "criteria": [
+    {
+     "text": "Classification determined for at least one jurisdiction (FDA SaMD, EU MDR class IIa+)",
+     "done": false,
+     "evidence": ""
+    },
+    {
+     "text": "A submission filed",
+     "done": false,
+     "evidence": ""
+    },
+    {
+     "text": "A post-market surveillance plan",
+     "done": false,
+     "evidence": ""
+    }
+   ]
+  },
+  {
+   "id": "scope_of_practice",
+   "title": "Scope of practice",
+   "short": "scope of practice",
+   "weight": 2,
+   "required": true,
+   "criteria": [
+    {
+     "text": "The licensed-act boundary written down: assessment, planning and counselling stay with a licensed human",
+     "done": true,
+     "evidence": {
+      "path": "docs/explanation/live-counselors.md",
+      "note": "the scope-of-practice row names assessment, treatment planning and counselling as licensed acts software cannot perform, bill for or supervise"
+     }
+    },
+    {
+     "text": "A deployment model that keeps those acts with the counselor (the extender pilot)",
+     "done": false,
+     "evidence": ""
+    },
+    {
+     "text": "An operator-training requirement for whoever watches the escalation queue",
+     "done": false,
+     "evidence": ""
+    }
+   ]
+  }
+ ]
+}

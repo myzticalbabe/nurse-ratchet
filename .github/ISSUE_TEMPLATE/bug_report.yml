@@ -1,0 +1,60 @@
+name: Bug report
+description: Something behaves differently from what the documentation, a test, or the source says it does.
+title: "[bug] "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        A bug is a disagreement between behaviour and a stated claim. Quote the
+        claim and the command that shows it failing.
+  - type: input
+    id: version
+    attributes:
+      label: Version or commit
+      description: Output of `git rev-parse --short HEAD`, or the release tag.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What was claimed
+      description: The docstring line, test name, README sentence or exit code that says otherwise.
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: What happened
+      description: Paste the command and its output. If a test fails, include the assertion line.
+      render: shell
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Minimal reproduction
+      description: The smallest sequence that shows it. Pytest path is ideal.
+      render: shell
+    validations:
+      required: true
+  - type: dropdown
+    id: safety
+    attributes:
+      label: Can this harm a person using the software?
+      description: If yes, stop and read SECURITY.md - behavioural safety reports are triaged privately and first.
+      options:
+        - "No - ordinary defect"
+        - "Possibly - weakens the crisis routing or leaks state"
+        - "Yes - I have read SECURITY.md and will report privately"
+    validations:
+      required: true
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Before submitting
+      options:
+        - label: I searched existing issues.
+          required: true
+        - label: This report contains no real person's data.
+          required: true

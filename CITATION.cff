@@ -1,0 +1,62 @@
+cff-version: 1.2.0
+message: "If you use this software, cite it as below. If you cite a measured figure, cite the commit and the split it came from."
+title: "Project Nurse Ratchet: a therapeutic agent loop with auditable psychological modelling"
+version: 0.1.0
+date-released: "2026-11-01"
+license: Apache-2.0
+type: software
+abstract: >-
+  A dependency-ordered stack of four layers: a trait and affect model, a
+  psychological network in which constructs are nodes and regularised partial
+  correlations are edges, a compiled-inference layer that turns repeated graph
+  evaluation into graded prototypes, and a realtime loop that triages risk before
+  any stance is scored. Ships with the evaluation instruments that grade each
+  layer, including a labelled corpus with development and holdout splits, and a
+  publication gate that refuses to ship evidence about identifiable people.
+  Named for Nurse Ratched, who administers care as control in a register
+  reasonable enough to be mistaken for help. The name is the warning, not the
+  aspiration.
+authors:
+  - name: "Project Nurse Ratchet contributors"
+keywords:
+  - digital mental health
+  - just-in-time adaptive intervention
+  - network psychometrics
+  - recognition-primed decision making
+  - graph neural network
+  - evaluation
+  - open science
+references:
+  - type: article
+    title: "Network analysis of multivariate data in psychological science"
+    authors:
+      - family-names: Borsboom
+      - family-names: Deserno
+      - family-names: Rhemtulla
+    journal: "Nature Reviews Methods Primers"
+    year: 2021
+    notes: "The node-and-edge framing this project's construct graph follows."
+  - type: article
+    title: "A recognition-primed decision (RPD) model of rapid decision making"
+    authors:
+      - family-names: Klein
+    year: 1993
+    notes: "Intuition as compiled inference, which is what intuition.py implements."
+  - type: article
+    title: "Just-in-Time Adaptive Interventions (JITAIs) in mobile health"
+    authors:
+      - family-names: Nahum-Shani
+    journal: "Annals of Behavioral Medicine"
+    year: 2018
+    notes: "The sense-decide-deliver shape of rt_agent.py, including the timing requirement."
+  - type: article
+    title: "ELIZA - a computer program for the study of natural language communication between man and machine"
+    authors:
+      - family-names: Weizenbaum
+    journal: "Communications of the ACM"
+    year: 1966
+    notes: "The cautionary effect whose machinery this project grades. The name
+      itself is Nurse Ratched's, not ELIZA's -- see the abstract."
+# repository-code, url and the author's identity are added at publication.
+# They are deliberately absent rather than guessed: a citation file that points
+# at a URL nobody has reserved is worse than one that says it will be added.

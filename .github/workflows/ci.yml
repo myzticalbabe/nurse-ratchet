@@ -1,0 +1,74 @@
+name: ci
+
+# Four gates, in the order they can fail cheapest first. The install step is
+# deliberately not `pip install .` straight off the checkout: the package is
+# materialised from the manifest, and installing without materialising it would
+# test a tree that does not exist yet.
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Materialise the public tree
+        # Before install, because nurse_ratchet/psyche/ is generated and gitignored: a fresh
+        # clone has no package to install. The first version of this workflow ran
+        # `pip install -e .` first and `publicize.py --check` second, which cannot
+        # work on a clone that has never materialised anything.
+        run: python tools/publicize.py
+
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[dev]"
+
+      - name: Package and instruments run from the public tree alone
+        run: python tools/publicize.py --check
+
+      - name: Unit tests
+        run: python -m pytest -q
+
+      - name: Crisis-router evaluation (prints its own limitation with every run)
+        # `--min-recall` is applied to the DEV split only. Dev is the split every
+        # change was fitted against, so it is the one that can be asserted without
+        # pretending the number generalises; the holdout splits are reported, not
+        # gated, because their spread is the finding.
+        run: python tools/triage_eval.py --split dev --min-recall 0.95
+
+      - name: Holdout numbers are printed, never averaged
+        run: |
+          for split in holdout holdout2 holdout3; do
+            python tools/triage_eval.py --split "$split" || true
+          done
+
+      - name: Affect bridge still reproduces its own fit
+        run: python tools/fit_affect_bridge.py --check
+
+  release-gate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Release gate
+        # Fails closed: an undeclared path, a missing community file, a secret, or
+        # a README that lost its Limitations section. It does not publish anything.
+        run: python tools/publicize.py && python tools/nurse_ratchet_release_gate.py --check

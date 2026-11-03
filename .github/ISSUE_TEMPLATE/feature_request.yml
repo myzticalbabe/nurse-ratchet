@@ -1,0 +1,58 @@
+name: Feature request
+description: Propose a capability, with the measurement that would show it works and the control that would show it failing.
+title: "[feature] "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        This project accepts a capability only with a test able to show it false.
+        A proposal without a falsification route will be answered with a request
+        for one, not with a rejection.
+  - type: dropdown
+    id: layer
+    attributes:
+      label: Which layer
+      description: Dependencies run top to bottom; a change low in the stack affects everything above it.
+      options:
+        - traits / affect
+        - network (construct graph)
+        - intuition (compiled inference)
+        - rt_agent (the loop)
+        - rt_channel (transport)
+        - instruments (evaluation, gates)
+        - documentation
+    validations:
+      required: true
+  - type: textarea
+    id: claim
+    attributes:
+      label: The falsifiable claim
+      description: Complete the sentence "after this change, X will be true of Y, and this test would catch it if it were not".
+    validations:
+      required: true
+  - type: textarea
+    id: control
+    attributes:
+      label: The negative control
+      description: What input must NOT trigger the new behaviour, and what would a false pass look like?
+    validations:
+      required: true
+  - type: textarea
+    id: measurement
+    attributes:
+      label: How it will be measured
+      description: If this claims speed, safety or accuracy, name the two numbers and the machine.
+    validations:
+      required: false
+  - type: checkboxes
+    id: scope
+    attributes:
+      label: Scope checks
+      options:
+        - label: This does not require tuning against the holdout split.
+          required: true
+        - label: This does not add a runtime dependency, or the issue explains why one is required.
+          required: true
+        - label: This does not publish evidence about identifiable people.
+          required: true

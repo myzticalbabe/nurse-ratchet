@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Behavioural safety or vulnerability (private)
+    url: https://github.com/OWNER/nurse_ratchet/security/advisories/new
+    about: Report privately. Anything that weakens crisis routing or leaks a person's state is a security issue, not a bug. See SECURITY.md.
+  - name: If you are in crisis
+    url: https://988lifeline.org/
+    about: This repository is not help. In the US, call or text 988. Elsewhere, contact your local emergency number.
