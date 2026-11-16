@@ -20,6 +20,26 @@ Person state modelling and verification.
 pip install -e .
 ```
 
+<!-- CERTIFICATION:START -->
+**Certifiable: 22.6%**  █████░░░░░░░░░░░░░░░
+
+4 of 19 acceptance criteria met  ·  0 of 6 required requirements fully met  ·  deployable as a counselor: **no**
+
+| requirement | weight | criteria | state |
+|---|---|---|---|
+| crisis router recall | 3 | 1/3 | open (required) |
+| construct data | 2 | 1/4 | open (required) |
+| human in the loop | 3 | 1/3 | open (required) |
+| comparator trial | 2 | 0/3 | open (required) |
+| regulatory | 2 | 0/3 | open (required) |
+| scope of practice | 2 | 1/3 | open (required) |
+
+Blocking requirements: `crisis_router_recall`, `construct_data_from_people`, `human_in_the_loop`, `comparator_evidence`, `regulatory_classification`, `scope_of_practice`.
+Certifications held: **none**. A held certificate is evidence of process, not of clinical validity, so it is recorded here and does not move the bar.
+
+_Generated from `certification.json` (`updated` 2026-11-01) by `tools/certification_bar.py --write`. The percentage is progress toward a gate; only the deployable line is a gate._
+<!-- CERTIFICATION:END -->
+
 ## Usage
 
 python -m nurse_ratchet --help
