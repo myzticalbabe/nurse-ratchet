@@ -10,6 +10,7 @@
 - A subprocess round-trip proves the protocol actually streams through stdio,
   which is the only form of "live" that can be verified here.
 """
+
 import io
 import json
 import os
@@ -20,10 +21,10 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 # (bootstrap removed by publicize: the package is installed)
 
-from nurse_ratchet.psyche import rt_agent as R
-from nurse_ratchet.psyche.intuition import IntuitionIndex
-from nurse_ratchet.psyche.network import PersonNetwork
-from nurse_ratchet.psyche.rt_channel import SessionChannel
+from nurse_ratchet.psyche import rt_agent as R  # noqa: E402
+from nurse_ratchet.psyche.intuition import IntuitionIndex  # noqa: E402
+from nurse_ratchet.psyche.network import PersonNetwork  # noqa: E402
+from nurse_ratchet.psyche.rt_channel import SessionChannel  # noqa: E402
 
 
 def _channel(budget_ms=50.0, max_message_chars=400):
@@ -55,8 +56,10 @@ def test_crisis_text_arrives_as_the_safety_stance():
 
 def test_malformed_json_does_not_end_the_session():
     channel = _channel()
-    stdin = io.StringIO('{"id": 1, "text": "hello"}\nnot json at all\n'
-                        '{"id": 3, "text": "still here"}\n')
+    stdin = io.StringIO(
+        '{"id": 1, "text": "hello"}\nnot json at all\n'
+        '{"id": 3, "text": "still here"}\n'
+    )
     stdout = io.StringIO()
     stats = channel.serve(stdin, stdout)
     lines = [json.loads(line) for line in stdout.getvalue().splitlines()]
@@ -125,12 +128,17 @@ def test_protocol_streams_through_a_real_subprocess():
     assert script.name == "rt_channel.py", script  # R is rt_agent; naming it wrong
     top_level = C.__name__.split(".")[0]
     location = importlib.util.find_spec(top_level).submodule_search_locations[0]
-    env = dict(os.environ)                       # runs the wrong script silently
+    env = dict(os.environ)  # runs the wrong script silently
     env["PYTHONPATH"] = str(Path(location).resolve().parent)
     env.pop("AZAZAEL_MEMORY_DIR", None)
     proc = subprocess.run(
         [sys.executable, str(script), "--demo", "--turns", "3"],
-        capture_output=True, text=True, timeout=120, env=env, cwd=str(ROOT))
+        capture_output=True,
+        text=True,
+        timeout=120,
+        env=env,
+        cwd=str(ROOT),
+    )
     assert proc.returncode == 0, proc.stderr[-800:]
     records = [json.loads(line) for line in proc.stdout.splitlines() if line.strip()]
     assert len(records) == 3

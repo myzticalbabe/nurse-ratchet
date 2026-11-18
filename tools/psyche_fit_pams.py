@@ -38,6 +38,7 @@ Usage:
   python tools/psyche_fit_pams.py --json
   python tools/psyche_fit_pams.py --store PATH --probe-all
 """
+
 from __future__ import annotations
 
 import argparse
@@ -74,12 +75,21 @@ ELICITATION_STORE = Path.home() / ".psyche" / "elicitations.jsonl"
 #: instruments cannot disagree about when data is sufficient.
 MIN_RECORDS = 3
 
-CONSTRUCT_COLUMNS: Tuple[str, ...] = ("constructs", "construct_state", "node_values",
-                                      "network_state")
+CONSTRUCT_COLUMNS: Tuple[str, ...] = (
+    "constructs",
+    "construct_state",
+    "node_values",
+    "network_state",
+)
 AFFECT_COLUMNS: Tuple[str, ...] = ("pad", "pad_state", "affect", "appraisal")
 JSON_COLUMNS: Tuple[str, ...] = ("metadata", "source_metadata", "result_metadata")
 #: Keys a metadata blob must carry for it to count as a construct reading.
-CONSTRUCT_KEYS: Tuple[str, ...] = ("constructs", "pad", "construct_state", "node_values")
+CONSTRUCT_KEYS: Tuple[str, ...] = (
+    "constructs",
+    "pad",
+    "construct_state",
+    "node_values",
+)
 
 
 def open_readonly(path: Path) -> sqlite3.Connection:
@@ -93,7 +103,8 @@ def describe(path: Path) -> Dict:
     try:
         tables: List[Dict] = []
         for name, _sql in conn.execute(
-                "select name, sql from sqlite_master where type='table'"):
+            "select name, sql from sqlite_master where type='table'"
+        ):
             if name.startswith("sqlite_"):
                 continue
             count = conn.execute('select count(*) from "%s"' % name).fetchone()[0]
@@ -131,8 +142,11 @@ def probe(path: Path) -> Dict:
     negative, not an empty success.
     """
     if not path.exists():
-        return {"source": None, "reason": "store does not exist: %s" % path,
-                "store": str(path)}
+        return {
+            "source": None,
+            "reason": "store does not exist: %s" % path,
+            "store": str(path),
+        }
     schema = describe(path)
     conn = open_readonly(path)
     try:
@@ -142,38 +156,61 @@ def probe(path: Path) -> Dict:
                 if column in columns:
                     rows = conn.execute(
                         'select "%s" from "%s" where "%s" is not null limit 5'
-                        % (column, table["table"], column)).fetchall()
+                        % (column, table["table"], column)
+                    ).fetchall()
                     if any(_decode(row[0]) for row in rows):
-                        return {"store": str(path), "table": table["table"],
-                                "column": column, "kind": "construct_column",
-                                "readings": table["rows"], "schema": schema}
+                        return {
+                            "store": str(path),
+                            "table": table["table"],
+                            "column": column,
+                            "kind": "construct_column",
+                            "readings": table["rows"],
+                            "schema": schema,
+                        }
             for column in AFFECT_COLUMNS:
                 if column in columns:
-                    return {"store": str(path), "table": table["table"],
-                            "column": column, "kind": "affect_column",
-                            "readings": table["rows"], "schema": schema}
+                    return {
+                        "store": str(path),
+                        "table": table["table"],
+                        "column": column,
+                        "kind": "affect_column",
+                        "readings": table["rows"],
+                        "schema": schema,
+                    }
             for column in JSON_COLUMNS:
                 if column not in columns:
                     continue
                 rows = conn.execute(
                     'select "%s" from "%s" where "%s" is not null limit 25'
-                    % (column, table["table"], column)).fetchall()
+                    % (column, table["table"], column)
+                ).fetchall()
                 hits = 0
                 for row in rows:
                     blob = _decode(row[0])
                     if blob and any(key in blob for key in CONSTRUCT_KEYS):
                         hits += 1
                 if hits:
-                    return {"store": str(path), "table": table["table"],
-                            "column": column, "kind": "metadata_json",
-                            "hits": hits, "probed": len(rows), "schema": schema}
+                    return {
+                        "store": str(path),
+                        "table": table["table"],
+                        "column": column,
+                        "kind": "metadata_json",
+                        "hits": hits,
+                        "probed": len(rows),
+                        "schema": schema,
+                    }
         available = sorted({c for t in schema["tables"] for c in t["columns"]})
-        return {"source": None, "store": str(path),
-                "reason": ("no construct-bearing column found: probed %d table(s) for "
-                           "constructs/pad/appraisal columns and for construct keys in "
-                           "metadata JSON; available columns were %s"
-                           % (len(schema["tables"]), ", ".join(available[:20]))),
-                "schema": schema}
+        return {
+            "source": None,
+            "store": str(path),
+            "reason": (
+                "no construct-bearing column found: probed %d table(s) for "
+                "constructs/pad/appraisal columns and for construct keys in "
+                "metadata JSON; available columns were %s"
+                % (len(schema["tables"]), ", ".join(available[:20]))
+            ),
+            "schema": schema,
+        }
     finally:
         conn.close()
 
@@ -187,9 +224,15 @@ def probe_elicitation(path: Path) -> Dict:
     """
     resolved = Path(os.environ.get(ELICITATION_ENV) or path).expanduser()
     if not resolved.exists():
-        return {"source": None, "store": str(resolved), "kind": "records_jsonl",
-                "reason": ("no elicitation store at %s -- run tools/elicit.py record "
-                           "to create one; nothing has been elicited yet" % resolved)}
+        return {
+            "source": None,
+            "store": str(resolved),
+            "kind": "records_jsonl",
+            "reason": (
+                "no elicitation store at %s -- run tools/elicit.py record "
+                "to create one; nothing has been elicited yet" % resolved
+            ),
+        }
     rows = 0
     usable = 0
     instruments = set()
@@ -206,17 +249,32 @@ def probe_elicitation(path: Path) -> Dict:
         if not isinstance(row, dict):
             crooked += 1
             continue
-        if isinstance(row.get("constructs"), dict) and isinstance(row.get("pad"), list) \
-                and len(row["pad"]) == 3:
+        if (
+            isinstance(row.get("constructs"), dict)
+            and isinstance(row.get("pad"), list)
+            and len(row["pad"]) == 3
+        ):
             usable += 1
             instruments.add(str(row.get("instrument", "unknown")))
     if not usable:
-        return {"source": None, "store": str(resolved), "kind": "records_jsonl",
-                "rows": rows, "reason": ("%d line(s) in the elicitation store, none "
-                                          "carrying both a pad and constructs" % rows)}
-    return {"store": str(resolved), "kind": "records_jsonl", "rows": rows,
-            "readings": usable, "unreadable": crooked,
-            "instruments": sorted(instruments)}
+        return {
+            "source": None,
+            "store": str(resolved),
+            "kind": "records_jsonl",
+            "rows": rows,
+            "reason": (
+                "%d line(s) in the elicitation store, none "
+                "carrying both a pad and constructs" % rows
+            ),
+        }
+    return {
+        "store": str(resolved),
+        "kind": "records_jsonl",
+        "rows": rows,
+        "readings": usable,
+        "unreadable": crooked,
+        "instruments": sorted(instruments),
+    }
 
 
 def readings_from_records(path: Path) -> List[Dict[str, float]]:
@@ -240,8 +298,11 @@ def readings_from_records(path: Path) -> List[Dict[str, float]]:
         constructs = row.get("constructs") if isinstance(row, dict) else None
         if not isinstance(constructs, dict):
             continue
-        values = {str(k): float(v) for k, v in constructs.items()
-                  if isinstance(v, (int, float)) and not isinstance(v, bool)}
+        values = {
+            str(k): float(v)
+            for k, v in constructs.items()
+            if isinstance(v, (int, float)) and not isinstance(v, bool)
+        }
         if values:
             out.append(values)
     return out
@@ -261,7 +322,8 @@ def readings_from(source: Dict, limit: int = 500) -> List[Dict[str, float]]:
     try:
         rows = conn.execute(
             'select "%s" from "%s" where "%s" is not null limit %d'
-            % (source["column"], source["table"], source["column"], limit)).fetchall()
+            % (source["column"], source["table"], source["column"], limit)
+        ).fetchall()
         for row in rows:
             blob = _decode(row[0])
             if not blob:
@@ -293,7 +355,9 @@ def readings_from(source: Dict, limit: int = 500) -> List[Dict[str, float]]:
     # difference between the probe's figure and the length of this list.
 
 
-def fit(readings: List[Dict[str, float]], nodes: Optional[List[str]] = None) -> PersonNetwork:
+def fit(
+    readings: List[Dict[str, float]], nodes: Optional[List[str]] = None
+) -> PersonNetwork:
     net = PersonNetwork(nodes=nodes)
     for i, obs in enumerate(readings):
         net.observe(obs, at_s=float(i))
@@ -304,8 +368,11 @@ def fit(readings: List[Dict[str, float]], nodes: Optional[List[str]] = None) -> 
 def main(argv: Optional[List[str]] = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--store", default=str(DEFAULT_STORE))
-    parser.add_argument("--probe-all", action="store_true",
-                        help="also probe sibling stores in the same directory")
+    parser.add_argument(
+        "--probe-all",
+        action="store_true",
+        help="also probe sibling stores in the same directory",
+    )
     parser.add_argument("--json", action="store_true")
     args = parser.parse_args(argv)
 
@@ -318,13 +385,15 @@ def main(argv: Optional[List[str]] = None) -> int:
     # data exists would make the graph a picture of the guess.
     records_probe = probe_elicitation(ELICITATION_STORE)
     probes = [probe(path) for path in stores]
-    found = ([records_probe] if records_probe.get("readings") else []) + \
-            [p for p in probes if p.get("table")]
+    found = ([records_probe] if records_probe.get("readings") else []) + [
+        p for p in probes if p.get("table")
+    ]
     if records_probe.get("readings"):
         report_extra = {"elicitation": records_probe}
     else:
-        report_extra = {"elicitation": {k: v for k, v in records_probe.items()
-                                         if k != "readings"}}
+        report_extra = {
+            "elicitation": {k: v for k, v in records_probe.items() if k != "readings"}
+        }
     report = {"probes": [{k: v for k, v in p.items() if k != "schema"} for p in probes]}
     report.update(report_extra)
 
@@ -335,7 +404,8 @@ def main(argv: Optional[List[str]] = None) -> int:
             "graph built here would be a graph of something else wearing these "
             "node names. The 119 curated memories carry memory_type, tags and "
             "importance_level: those support a tag co-occurrence analysis, which "
-            "is a different instrument and is not built here.")
+            "is a different instrument and is not built here."
+        )
         if args.json:
             print(json.dumps(report, indent=1))
         else:
@@ -344,49 +414,77 @@ def main(argv: Optional[List[str]] = None) -> int:
             # source that would actually answer, and the reader then concludes
             # the project has nowhere to put a measurement.
             print("elicitation probe -- %s" % records_probe["store"])
-            print("    %s" % (records_probe.get("reason") or
-                              "%d usable session(s) from %s"
-                              % (records_probe.get("readings", 0),
-                                 ", ".join(records_probe.get("instruments") or ["?"]))))
+            print(
+                "    %s"
+                % (
+                    records_probe.get("reason")
+                    or "%d usable session(s) from %s"
+                    % (
+                        records_probe.get("readings", 0),
+                        ", ".join(records_probe.get("instruments") or ["?"]),
+                    )
+                )
+            )
             print("PAMS construct probe -- %d store(s)" % len(probes))
             for p in probes:
                 print("  %s" % p["store"])
-                print("    %s" % (p.get("reason") or "construct source: %s.%s (%s)"
-                                  % (p["table"], p["column"], p["kind"])))
+                print(
+                    "    %s"
+                    % (
+                        p.get("reason")
+                        or "construct source: %s.%s (%s)"
+                        % (p["table"], p["column"], p["kind"])
+                    )
+                )
             print("\n  OUTCOME: no construct-bearing signal -> refusing to fit.")
             print("  %s" % report["note"])
         return 2
 
     source = found[0]
-    readings = (readings_from_records(Path(source["store"]))
-                if source.get("kind") == "records_jsonl" else readings_from(source))
+    readings = (
+        readings_from_records(Path(source["store"]))
+        if source.get("kind") == "records_jsonl"
+        else readings_from(source)
+    )
     report["source"] = {k: v for k, v in source.items() if k != "schema"}
     report["readings"] = len(readings)
     if len(readings) < MIN_RECORDS:
         report["outcome"] = "too_few_readings"
-        print(json.dumps(report, indent=1) if args.json else
-              "OUTCOME: only %d readable construct rows; %d are required and a "
-              "graph of %d observations is noise."
-              % (len(readings), MIN_RECORDS, MIN_RECORDS - 1))
+        print(
+            json.dumps(report, indent=1)
+            if args.json
+            else "OUTCOME: only %d readable construct rows; %d are required and a "
+            "graph of %d observations is noise."
+            % (len(readings), MIN_RECORDS, MIN_RECORDS - 1)
+        )
         return 2
     net = fit(readings)
     report["outcome"] = "fitted"
-    report["graph"] = {"nodes": len(net.nodes), "edges": len(net.edges()),
-                       "diagnostics": net.diagnostics(),
-                       "top_edges": [e.to_dict() for e in net.edges()[:10]]}
+    report["graph"] = {
+        "nodes": len(net.nodes),
+        "edges": len(net.edges()),
+        "diagnostics": net.diagnostics(),
+        "top_edges": [e.to_dict() for e in net.edges()[:10]],
+    }
     if args.json:
         print(json.dumps(report, indent=1))
     else:
         if source.get("kind") == "records_jsonl":
-            print("fitted from %s (%s), %d elicited session(s)"
-                  % (source["store"], source["kind"], len(readings)))
+            print(
+                "fitted from %s (%s), %d elicited session(s)"
+                % (source["store"], source["kind"], len(readings))
+            )
         else:
-            print("fitted from %s.%s (%s), %d readings"
-                  % (source["table"], source["column"], source["kind"], len(readings)))
+            print(
+                "fitted from %s.%s (%s), %d readings"
+                % (source["table"], source["column"], source["kind"], len(readings))
+            )
         print("  %d nodes, %d edges" % (len(net.nodes), len(net.edges())))
         for edge in net.edges()[:10]:
-            print("    %-18s %-18s pcorr=%+.3f support=%d"
-                  % (edge.a, edge.b, edge.weight, edge.support))
+            print(
+                "    %-18s %-18s pcorr=%+.3f support=%d"
+                % (edge.a, edge.b, edge.weight, edge.support)
+            )
     return 0
 
 

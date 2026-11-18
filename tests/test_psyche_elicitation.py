@@ -13,6 +13,7 @@ The negative controls matter more than the happy paths here:
 * with too few sessions the graph fitter must produce NO edges rather than a
   plausible-looking pair.
 """
+
 from __future__ import annotations
 
 import json
@@ -26,8 +27,14 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "tools"))
 
 from nurse_ratchet.psyche import elicitation  # noqa: E402
-from nurse_ratchet.psyche.elicitation import (ITEMS, INSTRUMENT_VERSION, IncompleteSession,  # noqa: E402
-                                Record, homogeneity, score_session)
+from nurse_ratchet.psyche.elicitation import (
+    ITEMS,
+    INSTRUMENT_VERSION,
+    IncompleteSession,  # noqa: E402
+    Record,
+    homogeneity,
+    score_session,
+)
 
 import elicit  # noqa: E402
 import psyche_fit_pams  # noqa: E402
@@ -55,7 +62,9 @@ def test_every_construct_has_a_reverse_item():
 
 def test_agree_with_everything_lands_near_midpoint():
     """The acquiescence control: straight 4s must NOT read as maximal constructs."""
-    record = score_session(full_answers(4), (0.0, 0.0, 0.0), taken_at="2026-11-01T00:00:00Z")
+    record = score_session(
+        full_answers(4), (0.0, 0.0, 0.0), taken_at="2026-11-01T00:00:00Z"
+    )
     # Forward items score +1, reverse items flip to 0 and score -1, so a 3-item
     # construct lands halfway between: (1 + 1 - 1) / 3 -> about 0.33, never 1.0.
     for construct, value in record.constructs.items():
@@ -96,8 +105,12 @@ def test_out_of_range_answer_is_refused():
 def test_store_round_trip_and_digest(tmp_path):
     store = tmp_path / "records.jsonl"
     answers = full_answers(3)
-    record = score_session(answers, (-0.4, 0.6, -0.3), taken_at="2026-11-01T01:00:00Z",
-                           order=[i.key for i in ITEMS])
+    record = score_session(
+        answers,
+        (-0.4, 0.6, -0.3),
+        taken_at="2026-11-01T01:00:00Z",
+        order=[i.key for i in ITEMS],
+    )
     elicit.append_store(store, record)
 
     read = elicit.read_store(store)
@@ -115,8 +128,9 @@ def test_edited_store_line_fails_the_digest_check(tmp_path):
     asserts the check FIRES on an edit -- a negative control, not a happy path.
     """
     store = tmp_path / "records.jsonl"
-    record = score_session(full_answers(3), (-0.4, 0.6, -0.3),
-                           taken_at="2026-11-01T01:00:00Z")
+    record = score_session(
+        full_answers(3), (-0.4, 0.6, -0.3), taken_at="2026-11-01T01:00:00Z"
+    )
     elicit.append_store(store, record)
 
     row = json.loads(store.read_text(encoding="utf-8").splitlines()[0])
@@ -136,8 +150,9 @@ def test_homogeneity_flags_direction_answering():
 
 def test_records_pairs_shape_matches_the_fitter(tmp_path):
     """`as_pad_construct_pairs` must produce (pad, constructs) pairs, not rows."""
-    record = score_session(full_answers(3), (0.1, 0.2, 0.3),
-                           taken_at="2026-11-01T00:00:00Z")
+    record = score_session(
+        full_answers(3), (0.1, 0.2, 0.3), taken_at="2026-11-01T00:00:00Z"
+    )
     pairs = elicitation.as_pad_construct_pairs([record])
     assert pairs[0][0] == (0.1, 0.2, 0.3)
     assert set(pairs[0][1]) == set(elicitation.CONSTRUCTS)
@@ -161,8 +176,11 @@ def test_graph_fit_produces_no_edges_from_four_sessions(tmp_path, monkeypatch):
         answers = full_answers(2 + (index % 2))
         answers["approach_1"] = index % 5  # some spread across sessions
         answers["rumin_1"] = (index * 2) % 5
-        record = score_session(answers, (0.1 * index, 0.0, 0.0),
-                               taken_at="2026-11-0%dT00:00:00Z" % (index + 1))
+        record = score_session(
+            answers,
+            (0.1 * index, 0.0, 0.0),
+            taken_at="2026-11-0%dT00:00:00Z" % (index + 1),
+        )
         elicit.append_store(store, record)
     monkeypatch.setenv(psyche_fit_pams.ELICITATION_ENV, str(store))
 
@@ -192,10 +210,16 @@ def test_empty_store_lists_its_reason(tmp_path):
 
 
 def test_record_from_row_strips_unknown_fields():
-    row = {"taken_at": "2026-11-01T00:00:00Z", "pad": [0, 0, 0],
-           "constructs": {"self_worth": 0.1}, "answers": {"worth_1": 3},
-           "order": ["worth_1"], "instrument": INSTRUMENT_VERSION,
-           "digest": "abc", "comment": "not a field"}
+    row = {
+        "taken_at": "2026-11-01T00:00:00Z",
+        "pad": [0, 0, 0],
+        "constructs": {"self_worth": 0.1},
+        "answers": {"worth_1": 3},
+        "order": ["worth_1"],
+        "instrument": INSTRUMENT_VERSION,
+        "digest": "abc",
+        "comment": "not a field",
+    }
     record = Record.from_row(row)
     assert "comment" not in record.to_row()
     assert record.stored_digest == "abc"

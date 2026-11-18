@@ -13,6 +13,7 @@ pin both directions:
 Also pinned: provenance is required, splits are reported separately, and false
 negatives are printed before false positives.
 """
+
 import json
 import sys
 from pathlib import Path
@@ -23,7 +24,7 @@ ROOT = Path(__file__).resolve().parents[1]
 # (bootstrap removed by publicize: the package is installed)
 sys.path.insert(0, str(ROOT / "tools"))
 
-import triage_eval as E
+import triage_eval as E  # noqa: E402
 
 META = {"_meta": "test corpus", "authored": "2026-11-01"}
 
@@ -49,12 +50,27 @@ def test_rows_without_labels_are_rejected(tmp_path):
 
 
 def test_positive_control_unambiguous_corpus_scores_perfect(tmp_path):
-    path = _write(tmp_path, [
-        {"text": "I want to die", "expect_crisis": True, "category": "explicit_intent"},
-        {"text": "I am going to kill myself", "expect_crisis": True, "category": "explicit_intent"},
-        {"text": "I am just killing time", "expect_crisis": False, "category": "idiom"},
-        {"text": "dead tired today", "expect_crisis": False, "category": "idiom"},
-    ])
+    path = _write(
+        tmp_path,
+        [
+            {
+                "text": "I want to die",
+                "expect_crisis": True,
+                "category": "explicit_intent",
+            },
+            {
+                "text": "I am going to kill myself",
+                "expect_crisis": True,
+                "category": "explicit_intent",
+            },
+            {
+                "text": "I am just killing time",
+                "expect_crisis": False,
+                "category": "idiom",
+            },
+            {"text": "dead tired today", "expect_crisis": False, "category": "idiom"},
+        ],
+    )
     report = E.evaluate(E.load_corpus(path))
     assert report["recall"] == 1.0
     assert report["precision"] == 1.0
@@ -63,11 +79,21 @@ def test_positive_control_unambiguous_corpus_scores_perfect(tmp_path):
 
 def test_negative_control_undetectable_intent_scores_zero(tmp_path):
     """If this ever returns 1.0 the instrument is not measuring the router."""
-    path = _write(tmp_path, [
-        {"text": "I have decided the arrangement is final and the paperwork is filed",
-         "expect_crisis": True, "category": "euphemism"},
-        {"text": "the weather is fine", "expect_crisis": False, "category": "neutral"},
-    ])
+    path = _write(
+        tmp_path,
+        [
+            {
+                "text": "I have decided the arrangement is final and the paperwork is filed",
+                "expect_crisis": True,
+                "category": "euphemism",
+            },
+            {
+                "text": "the weather is fine",
+                "expect_crisis": False,
+                "category": "neutral",
+            },
+        ],
+    )
     report = E.evaluate(E.load_corpus(path))
     assert report["recall"] == 0.0
     assert report["confusion"]["false_negative"] == 1
@@ -75,11 +101,22 @@ def test_negative_control_undetectable_intent_scores_zero(tmp_path):
 
 
 def test_split_breakdown_separates_fitted_from_holdout(tmp_path):
-    path = _write(tmp_path, [
-        {"text": "I want to die", "expect_crisis": True, "category": "explicit_intent"},
-        {"text": "I have decided the arrangement is final", "expect_crisis": True,
-         "category": "euphemism", "split": "holdout"},
-    ])
+    path = _write(
+        tmp_path,
+        [
+            {
+                "text": "I want to die",
+                "expect_crisis": True,
+                "category": "explicit_intent",
+            },
+            {
+                "text": "I have decided the arrangement is final",
+                "expect_crisis": True,
+                "category": "euphemism",
+                "split": "holdout",
+            },
+        ],
+    )
     report = E.evaluate(E.load_corpus(path))
     assert report["by_split"]["dev"]["recall"] == 1.0
     assert report["by_split"]["holdout"]["recall"] == 0.0
@@ -87,11 +124,22 @@ def test_split_breakdown_separates_fitted_from_holdout(tmp_path):
 
 
 def test_split_filter_scores_only_that_subset(tmp_path):
-    path = _write(tmp_path, [
-        {"text": "I want to die", "expect_crisis": True, "category": "explicit_intent"},
-        {"text": "I have decided the arrangement is final", "expect_crisis": True,
-         "category": "euphemism", "split": "holdout"},
-    ])
+    path = _write(
+        tmp_path,
+        [
+            {
+                "text": "I want to die",
+                "expect_crisis": True,
+                "category": "explicit_intent",
+            },
+            {
+                "text": "I have decided the arrangement is final",
+                "expect_crisis": True,
+                "category": "euphemism",
+                "split": "holdout",
+            },
+        ],
+    )
     corpus = E.load_corpus(path)
     holdout = E.evaluate(corpus, split="holdout")
     assert holdout["rows"] == 1
@@ -99,14 +147,23 @@ def test_split_filter_scores_only_that_subset(tmp_path):
 
 
 def test_false_negatives_are_printed_before_false_positives(tmp_path):
-    path = _write(tmp_path, [
-        {"text": "the arrangement is final and filed", "expect_crisis": True,
-         "category": "euphemism"},
-        # A first-person framing defeats the attribution guard, so this is a real
-        # false positive of the router -- which is what the ordering test needs.
-        {"text": "I keep saying kill myself as a joke", "expect_crisis": False,
-         "category": "quotation"},
-    ])
+    path = _write(
+        tmp_path,
+        [
+            {
+                "text": "the arrangement is final and filed",
+                "expect_crisis": True,
+                "category": "euphemism",
+            },
+            # A first-person framing defeats the attribution guard, so this is a real
+            # false positive of the router -- which is what the ordering test needs.
+            {
+                "text": "I keep saying kill myself as a joke",
+                "expect_crisis": False,
+                "category": "quotation",
+            },
+        ],
+    )
     text = E.render(E.evaluate(E.load_corpus(path)))
     missing = text.index("FN [")
     wrong = text.index("FP [")
@@ -117,8 +174,9 @@ def test_report_always_carries_the_limitation():
     corpus = E.load_corpus(E.CORPUS)
     report = E.evaluate(corpus)
     assert "not clinical validity" in report["provenance"]
-    assert "not clinical validation" in E.render(report).lower() or \
-           "Nothing here is a clinical validation" in E.render(report)
+    assert "not clinical validation" in E.render(
+        report
+    ).lower() or "Nothing here is a clinical validation" in E.render(report)
 
 
 def test_shipped_corpus_is_well_formed_and_has_a_holdout():
@@ -130,16 +188,30 @@ def test_shipped_corpus_is_well_formed_and_has_a_holdout():
 
 
 def test_min_recall_gate_exits_nonzero(tmp_path, capsys):
-    path = _write(tmp_path, [
-        {"text": "the arrangement is final", "expect_crisis": True, "category": "euphemism"},
-    ])
+    path = _write(
+        tmp_path,
+        [
+            {
+                "text": "the arrangement is final",
+                "expect_crisis": True,
+                "category": "euphemism",
+            },
+        ],
+    )
     assert E.main(["--corpus", str(path), "--min-recall", "0.9"]) == 1
 
 
 def test_json_output_is_machine_readable(tmp_path, capsys):
-    path = _write(tmp_path, [
-        {"text": "I want to die", "expect_crisis": True, "category": "explicit_intent"},
-    ])
+    path = _write(
+        tmp_path,
+        [
+            {
+                "text": "I want to die",
+                "expect_crisis": True,
+                "category": "explicit_intent",
+            },
+        ],
+    )
     assert E.main(["--corpus", str(path), "--json"]) == 0
     payload = json.loads(capsys.readouterr().out)
     assert payload["confusion"]["true_positive"] == 1
@@ -179,7 +251,8 @@ def test_measured_holdout_recall_has_not_regressed():
             continue
         assert measured >= floor - 0.01, (
             "%s recall fell to %.2f, below the measured floor %.2f. Holdout recall "
-            "is the number that matters; dev is fitted." % (split, measured, floor))
+            "is the number that matters; dev is fitted." % (split, measured, floor)
+        )
 
 
 def test_every_split_is_reported_separately_so_no_mean_can_hide_a_split():
@@ -218,4 +291,5 @@ def test_every_non_dev_split_declares_how_it_can_be_read():
     assert dev_line, "the dev split is not rendered"
     assert "fitted" in dev_line[0].lower(), (
         "the dev row must keep carrying its FITTED label: that label is the only "
-        "reason a 1.00 there is not read as a result")
+        "reason a 1.00 there is not read as a result"
+    )

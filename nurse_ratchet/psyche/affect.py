@@ -46,19 +46,21 @@ Temperament weights below are INITIAL, approximately signed after
 Mehrabian's PAD-temperament regressions, and REPLACEABLE: Phase 2 fits
 them per person. Tests pin directions and editability, not the constants.
 """
+
 from __future__ import annotations
 
 import math
-from typing import List
 
 #: Swallows recorded when the failure ledger is unavailable (it is a stdlib-only
 #: leaf, so this fallback should never fire -- if it does, the ledger is missing).
 
 try:
     from CORE.failure_ledger import note_failure
-except ImportError:                               # never break the host
+except ImportError:  # never break the host
+
     def note_failure(where: str, exc: BaseException | None = None) -> None:
         pass  # ledger missing; evidence-vs-silence tradeoff capped here
+
 
 # Initial temperament weights: (E, A, N, O, C, H) multipliers.
 # Signs follow the published pattern (E/A lift pleasure, N depresses it;
@@ -73,16 +75,26 @@ TEMPERAMENT_WEIGHTS = {
 # OCC emotion families with eliciting structure. Each entry:
 # (branch, conditions-summary). Intensity computed per family below.
 OCC_FAMILIES = (
-    "joy", "distress",              # well-being: desirable/undesirable event
-    "hope", "fear",                 # prospect: unconfirmed desirable/undesirable
-    "satisfaction", "fears_confirmed",
-    "relief", "disappointment",     # prospect confirmation/disconfirmation
-    "happy_for", "resentment",      # fortunes of others, liked agent
-    "gloating", "pity",             # fortunes of others, disliked agent
-    "pride", "shame",               # self action praiseworthy/blameworthy
-    "admiration", "reproach",        # other action praiseworthy/blameworthy
-    "love", "hate",                 # object appealing/unappealing
-    "gratitude", "anger",           # compound: desirable event + praiseworthy act
+    "joy",
+    "distress",  # well-being: desirable/undesirable event
+    "hope",
+    "fear",  # prospect: unconfirmed desirable/undesirable
+    "satisfaction",
+    "fears_confirmed",
+    "relief",
+    "disappointment",  # prospect confirmation/disconfirmation
+    "happy_for",
+    "resentment",  # fortunes of others, liked agent
+    "gloating",
+    "pity",  # fortunes of others, disliked agent
+    "pride",
+    "shame",  # self action praiseworthy/blameworthy
+    "admiration",
+    "reproach",  # other action praiseworthy/blameworthy
+    "love",
+    "hate",  # object appealing/unappealing
+    "gratitude",
+    "anger",  # compound: desirable event + praiseworthy act
 )
 
 
@@ -98,21 +110,24 @@ def pad_normalize(pad: tuple[float, ...]) -> tuple[float, float, float]:
     return (round(p, 4), round(a, 4), round(d, 4))
 
 
-def pad_distance(a: tuple[float, float, float],
-                 b: tuple[float, float, float]) -> float:
+def pad_distance(a: tuple[float, float, float], b: tuple[float, float, float]) -> float:
     return round(math.sqrt(sum((x - y) ** 2 for x, y in zip(a, b))), 4)
 
 
-def pad_blend(a: tuple[float, float, float], b: tuple[float, float, float],
-              weight: float = 0.5) -> tuple[float, float, float]:
+def pad_blend(
+    a: tuple[float, float, float], b: tuple[float, float, float], weight: float = 0.5
+) -> tuple[float, float, float]:
     """Weighted blend of two PAD states (mixed emotions live here)."""
     w = max(0.0, min(1.0, weight))
     return pad_normalize(tuple(x * (1.0 - w) + y * w for x, y in zip(a, b)))
 
 
-def pad_decay(current: tuple[float, float, float],
-              baseline: tuple[float, float, float],
-              rate: float, dt: float = 1.0) -> tuple[float, float, float]:
+def pad_decay(
+    current: tuple[float, float, float],
+    baseline: tuple[float, float, float],
+    rate: float,
+    dt: float = 1.0,
+) -> tuple[float, float, float]:
     """Exponential return toward the person's OWN baseline (not zero).
 
     rate is per-person (affective chronometry). Higher rate = faster
@@ -122,8 +137,9 @@ def pad_decay(current: tuple[float, float, float],
     return pad_normalize(tuple(c + (b - c) * k for c, b in zip(current, baseline)))
 
 
-def temperament(domains: dict[str, float],
-                weights: dict | None = None) -> tuple[float, float, float]:
+def temperament(
+    domains: dict[str, float], weights: dict | None = None
+) -> tuple[float, float, float]:
     """Mean-PAD baseline from trait domains (P4: behavior in, traits out).
 
     domains: 1..5 per-domain scores (TraitVector.domains()). Missing
@@ -145,8 +161,12 @@ def temperament(domains: dict[str, float],
     return pad_normalize(tuple(out))
 
 
-def _intensity(base: float, likelihood: float = 1.0, effort: float = 0.0,
-               unexpectedness: float = 0.0) -> float:
+def _intensity(
+    base: float,
+    likelihood: float = 1.0,
+    effort: float = 0.0,
+    unexpectedness: float = 0.0,
+) -> float:
     """OCC intensity: |value| scaled by likelihood, effort, surprise."""
     v = abs(float(base))
     v *= 0.5 + 0.5 * max(0.0, min(1.0, float(likelihood)))
@@ -155,11 +175,15 @@ def _intensity(base: float, likelihood: float = 1.0, effort: float = 0.0,
     return round(max(0.0, min(1.0, v)), 4)
 
 
-def appraise_event(desirability: float, likelihood: float = 1.0,
-                   confirmed: bool | None = None, effort: float = 0.0,
-                   unexpectedness: float = 0.0,
-                   for_other: bool = False,
-                   liking_other: float = 0.0) -> list[tuple[str, float, str]]:
+def appraise_event(
+    desirability: float,
+    likelihood: float = 1.0,
+    confirmed: bool | None = None,
+    effort: float = 0.0,
+    unexpectedness: float = 0.0,
+    for_other: bool = False,
+    liking_other: float = 0.0,
+) -> list[tuple[str, float, str]]:
     """OCC event branch -> ranked [(emotion, intensity, basis)].
 
     confirmed None = prospect (hope/fear); True/False = confirmation
@@ -189,14 +213,14 @@ def appraise_event(desirability: float, likelihood: float = 1.0,
             fam = "fears_confirmed" if confirmed else "relief"
         out.append((fam, mag, "prospect %sconfirmed" % ("" if confirmed else "dis")))
     # Well-being tone always co-occurs (joy/distress underlie prospect).
-    out.append(("joy" if d > 0 else "distress",
-                round(mag * 0.6, 4), "well-being tone"))
+    out.append(("joy" if d > 0 else "distress", round(mag * 0.6, 4), "well-being tone"))
     out.sort(key=lambda r: -r[1])
     return out
 
 
-def appraise_action(praiseworthiness: float, self_agent: bool = True,
-                    effort: float = 0.0) -> list[tuple[str, float, str]]:
+def appraise_action(
+    praiseworthiness: float, self_agent: bool = True, effort: float = 0.0
+) -> list[tuple[str, float, str]]:
     """OCC action branch: pride/shame (self) or admiration/reproach (other)."""
     p = clamp(praiseworthiness)
     if abs(p) < 0.05:
@@ -209,7 +233,9 @@ def appraise_action(praiseworthiness: float, self_agent: bool = True,
     return [(fam, mag, "own action" if self_agent else "other action")]
 
 
-def appraise_object(appealingness: float, familiarity: float = 0.5) -> list[tuple[str, float, str]]:
+def appraise_object(
+    appealingness: float, familiarity: float = 0.5
+) -> list[tuple[str, float, str]]:
     """OCC object branch: love/hate, strengthened by familiarity."""
     a = clamp(appealingness)
     if abs(a) < 0.05:
@@ -218,16 +244,19 @@ def appraise_object(appealingness: float, familiarity: float = 0.5) -> list[tupl
     return [("love" if a > 0 else "hate", mag, "object appeal")]
 
 
-def compound_gratitude_anger(event_out: list, action_out: list) -> list[tuple[str, float, str]]:
+def compound_gratitude_anger(
+    event_out: list, action_out: list
+) -> list[tuple[str, float, str]]:
     """OCC compounds: desirable event + praiseworthy act -> gratitude;
     undesirable event + blameworthy act -> anger."""
     have = {fam for fam, _i, _b in event_out} | {fam for fam, _i, _b in action_out}
     out = []
-    if {"joy", "satisfaction", "happy_for"} & have and \
-            {"pride", "admiration"} & have:
+    if {"joy", "satisfaction", "happy_for"} & have and {"pride", "admiration"} & have:
         out.append(("gratitude", 0.7, "desirable event caused by praiseworthy act"))
-    if {"distress", "disappointment", "fears_confirmed"} & have and \
-            {"shame", "reproach"} & have:
+    if {"distress", "disappointment", "fears_confirmed"} & have and {
+        "shame",
+        "reproach",
+    } & have:
         out.append(("anger", 0.7, "undesirable event caused by blameworthy act"))
     return out
 
@@ -240,16 +269,26 @@ def emotion_to_pad(family: str, intensity: float = 1.0) -> tuple[float, float, f
     fear) lowers it. Intensity scales the displacement from neutral.
     """
     table = {
-        "joy": (0.8, 0.3, 0.2), "distress": (-0.8, 0.3, -0.2),
-        "hope": (0.5, 0.6, 0.1), "fear": (-0.6, 0.8, -0.5),
-        "satisfaction": (0.9, 0.2, 0.4), "fears_confirmed": (-0.9, 0.5, -0.6),
-        "relief": (0.7, -0.3, 0.3), "disappointment": (-0.7, 0.2, -0.3),
-        "happy_for": (0.7, 0.2, 0.1), "resentment": (-0.5, 0.5, -0.2),
-        "gloating": (0.4, 0.5, 0.4), "pity": (-0.4, 0.1, -0.3),
-        "pride": (0.6, 0.4, 0.7), "shame": (-0.6, 0.4, -0.7),
-        "admiration": (0.6, 0.3, -0.1), "reproach": (-0.5, 0.5, 0.2),
-        "love": (0.8, 0.2, 0.0), "hate": (-0.8, 0.5, 0.1),
-        "gratitude": (0.8, 0.2, -0.2), "anger": (-0.7, 0.8, 0.6),
+        "joy": (0.8, 0.3, 0.2),
+        "distress": (-0.8, 0.3, -0.2),
+        "hope": (0.5, 0.6, 0.1),
+        "fear": (-0.6, 0.8, -0.5),
+        "satisfaction": (0.9, 0.2, 0.4),
+        "fears_confirmed": (-0.9, 0.5, -0.6),
+        "relief": (0.7, -0.3, 0.3),
+        "disappointment": (-0.7, 0.2, -0.3),
+        "happy_for": (0.7, 0.2, 0.1),
+        "resentment": (-0.5, 0.5, -0.2),
+        "gloating": (0.4, 0.5, 0.4),
+        "pity": (-0.4, 0.1, -0.3),
+        "pride": (0.6, 0.4, 0.7),
+        "shame": (-0.6, 0.4, -0.7),
+        "admiration": (0.6, 0.3, -0.1),
+        "reproach": (-0.5, 0.5, 0.2),
+        "love": (0.8, 0.2, 0.0),
+        "hate": (-0.8, 0.5, 0.1),
+        "gratitude": (0.8, 0.2, -0.2),
+        "anger": (-0.7, 0.8, 0.6),
     }
     vec = table.get(family, (0.0, 0.0, 0.0))
     k = max(0.0, min(1.0, float(intensity)))
@@ -257,6 +296,7 @@ def emotion_to_pad(family: str, intensity: float = 1.0) -> tuple[float, float, f
 
 
 # ── Regulation (Gross process model): strategies are per-person data ──
+
 
 def reappraise_desirability(desirability: float, factor: float) -> float:
     """Cognitive change: re-interpreting the event scales its desirability,
@@ -266,8 +306,9 @@ def reappraise_desirability(desirability: float, factor: float) -> float:
     return clamp(float(desirability) * float(factor))
 
 
-def suppress_display(pad: tuple[float, float, float],
-                     factor: float) -> tuple[float, float, float]:
+def suppress_display(
+    pad: tuple[float, float, float], factor: float
+) -> tuple[float, float, float]:
     """Response modulation: scales the DISPLAYED state only.
 
     The felt state is untouched (returned separately by the caller holding
@@ -278,8 +319,9 @@ def suppress_display(pad: tuple[float, float, float],
     return pad_normalize(tuple(v * f for v in pad))
 
 
-def express(felt: tuple[float, float, float],
-            display_rules: dict | None = None) -> dict:
+def express(
+    felt: tuple[float, float, float], display_rules: dict | None = None
+) -> dict:
     """Felt vs displayed, with the rule cited or explicitly absent.
 
     display_rules (optional, per-person, sourced from THEIR data):
@@ -290,16 +332,24 @@ def express(felt: tuple[float, float, float],
     rules = display_rules or {}
     if not rules:
         return {"felt": felt, "displayed": felt, "rule": None}
-    return {"felt": felt, "displayed": felt,
-            "rule": str(rules.get("name", "custom")),
-            "note": "display-rule application is caller-side; "
-                    "felt state preserved verbatim above"}
+    return {
+        "felt": felt,
+        "displayed": felt,
+        "rule": str(rules.get("name", "custom")),
+        "note": "display-rule application is caller-side; "
+        "felt state preserved verbatim above",
+    }
 
 
 # ── TD bridge: learning signals -> appraisal checks ─────────────
 
-def td_appraisal(reward_prediction_error: float, state_visits: int = 0,
-                 goal_value: float = 0.0, coping: float = 0.5) -> dict:
+
+def td_appraisal(
+    reward_prediction_error: float,
+    state_visits: int = 0,
+    goal_value: float = 0.0,
+    coping: float = 0.5,
+) -> dict:
     """Map RL signals to appraisal checks (arXiv 2309.06367 pattern).
 
     suddenness: novelty = inverse visitation (first sight = maximally sudden)
@@ -313,6 +363,10 @@ def td_appraisal(reward_prediction_error: float, state_visits: int = 0,
     relevance = round(max(0.0, min(1.0, abs(float(goal_value)))), 4)
     conduciveness = round(max(-1.0, min(1.0, float(reward_prediction_error))), 4)
     power = round(max(0.0, min(1.0, float(coping))), 4)
-    return {"suddenness": suddenness, "relevance": relevance,
-            "conduciveness": conduciveness, "power": power,
-            "desirability": conduciveness}
+    return {
+        "suddenness": suddenness,
+        "relevance": relevance,
+        "conduciveness": conduciveness,
+        "power": power,
+        "desirability": conduciveness,
+    }

@@ -9,6 +9,7 @@ confident graph of the wrong thing, so both directions are pinned:
   REFUSES   a store shaped like the real PAMS table (content/memory_type/tags)
             -> exit 2, with the reason naming what WAS available.
 """
+
 import json
 import sqlite3
 import sys
@@ -18,18 +19,30 @@ ROOT = Path(__file__).resolve().parents[1]
 # (bootstrap removed by publicize: the package is installed)
 sys.path.insert(0, str(ROOT / "tools"))
 
-import psyche_fit_pams as P
+import psyche_fit_pams as P  # noqa: E402
 
 
 def _construct_store(tmp_path):
     path = tmp_path / "states.db"
     conn = sqlite3.connect(path, timeout=5.0)
-    conn.execute("create table state_readings (id integer primary key, constructs text)")
+    conn.execute(
+        "create table state_readings (id integer primary key, constructs text)"
+    )
     rows = []
     for i in range(24):
         x = ((i % 6) - 3) / 3.0
-        rows.append((json.dumps({"threat_appraisal": x, "avoidance": 0.9 * x,
-                                 "approach": -0.5 * x, "self_worth": -0.4 * x}),))
+        rows.append(
+            (
+                json.dumps(
+                    {
+                        "threat_appraisal": x,
+                        "avoidance": 0.9 * x,
+                        "approach": -0.5 * x,
+                        "self_worth": -0.4 * x,
+                    }
+                ),
+            )
+        )
     conn.executemany("insert into state_readings (constructs) values (?)", rows)
     conn.commit()
     conn.close()
@@ -40,10 +53,14 @@ def _memory_store(tmp_path):
     """Shaped like the real PAMS curated_memories table."""
     path = tmp_path / "memories.db"
     conn = sqlite3.connect(path, timeout=5.0)
-    conn.execute("create table curated_memories (memory_id text primary key, "
-                 "content text, memory_type text, tags text, importance_level integer)")
-    conn.execute("insert into curated_memories values "
-                 "('m1', 'session notes about the build', 'note', 'build', 7)")
+    conn.execute(
+        "create table curated_memories (memory_id text primary key, "
+        "content text, memory_type text, tags text, importance_level integer)"
+    )
+    conn.execute(
+        "insert into curated_memories values "
+        "('m1', 'session notes about the build', 'note', 'build', 7)"
+    )
     conn.commit()
     conn.close()
     return path
@@ -92,9 +109,10 @@ def test_metadata_json_column_is_accepted_when_it_carries_constructs(tmp_path):
     path = tmp_path / "meta.db"
     conn = sqlite3.connect(path, timeout=5.0)
     conn.execute("create table readings (id integer primary key, metadata text)")
-    conn.executemany("insert into readings (metadata) values (?)",
-                     [(json.dumps({"pad": [0.1, 0.2, 0.3]}),),
-                      (json.dumps({"unrelated": 1}),)])
+    conn.executemany(
+        "insert into readings (metadata) values (?)",
+        [(json.dumps({"pad": [0.1, 0.2, 0.3]}),), (json.dumps({"unrelated": 1}),)],
+    )
     conn.commit()
     conn.close()
     result = P.probe(path)
@@ -105,15 +123,25 @@ def test_metadata_json_column_is_accepted_when_it_carries_constructs(tmp_path):
 def test_unparseable_rows_are_skipped_not_zeroed(tmp_path):
     path = tmp_path / "mixed.db"
     conn = sqlite3.connect(path, timeout=5.0)
-    conn.execute("create table state_readings (id integer primary key, constructs text)")
-    conn.executemany("insert into state_readings (constructs) values (?)",
-                     [(json.dumps({"threat_appraisal": 0.4}),),
-                      ("not json",),
-                      (json.dumps({"note": "no numbers here"}),)])
+    conn.execute(
+        "create table state_readings (id integer primary key, constructs text)"
+    )
+    conn.executemany(
+        "insert into state_readings (constructs) values (?)",
+        [
+            (json.dumps({"threat_appraisal": 0.4}),),
+            ("not json",),
+            (json.dumps({"note": "no numbers here"}),),
+        ],
+    )
     conn.commit()
     conn.close()
-    source = {"store": str(path), "table": "state_readings",
-              "column": "constructs", "kind": "construct_column"}
+    source = {
+        "store": str(path),
+        "table": "state_readings",
+        "column": "constructs",
+        "kind": "construct_column",
+    }
     readings = P.readings_from(source)
     # one of three is usable: treating the other two as zeros would inject
     # two fake observations into the covariance
@@ -123,10 +151,13 @@ def test_unparseable_rows_are_skipped_not_zeroed(tmp_path):
 def test_two_readings_are_not_enough_to_fit(tmp_path, capsys):
     path = tmp_path / "tiny.db"
     conn = sqlite3.connect(path, timeout=5.0)
-    conn.execute("create table state_readings (id integer primary key, constructs text)")
-    conn.executemany("insert into state_readings (constructs) values (?)",
-                     [(json.dumps({"a": 1.0, "b": 0.5}),),
-                      (json.dumps({"a": -1.0, "b": -0.5}),)])
+    conn.execute(
+        "create table state_readings (id integer primary key, constructs text)"
+    )
+    conn.executemany(
+        "insert into state_readings (constructs) values (?)",
+        [(json.dumps({"a": 1.0, "b": 0.5}),), (json.dumps({"a": -1.0, "b": -0.5}),)],
+    )
     conn.commit()
     conn.close()
     assert P.main(["--store", str(path)]) == 2

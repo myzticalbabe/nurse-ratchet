@@ -26,6 +26,7 @@ Usage:
   python tools/nurse_ratchet_release_gate.py --check
   python tools/nurse_ratchet_release_gate.py --check --json
 """
+
 from __future__ import annotations
 
 import argparse
@@ -43,8 +44,11 @@ ROOT = Path(__file__).resolve().parents[1]
 #: Resolving by existence rather than by rewriting keeps one copy of the file
 #: honest in both -- a rewrite applied at copy time is a second version of the
 #: gate that nobody tests.
-PROJECT = (ROOT / "Project_Nurse_Ratchet"
-           if (ROOT / "Project_Nurse_Ratchet").is_dir() else ROOT)
+PROJECT = (
+    ROOT / "Project_Nurse_Ratchet"
+    if (ROOT / "Project_Nurse_Ratchet").is_dir()
+    else ROOT
+)
 MANIFEST = PROJECT / "PUBLIC_MANIFEST.json"
 
 #: GitHub's community-profile checklist, plus the four files this project adds
@@ -88,13 +92,30 @@ SECRET_PATTERNS: Tuple[Tuple[str, str], ...] = (
     ("github_token", r"\bgh[pousr]_[A-Za-z0-9]{20,}\b"),
     ("slack_token", r"\bxox[baprs]-[A-Za-z0-9-]{10,}\b"),
     ("openai_key", r"\bsk-[A-Za-z0-9]{32,}\b"),
-    ("assigned_secret", r"(?i)\b(api[_-]?key|secret|password|passwd|token)\b\s*[:=]\s*"
-                        r"[\"']?[A-Za-z0-9_\-]{16,}[\"']?"),
+    (
+        "assigned_secret",
+        r"(?i)\b(api[_-]?key|secret|password|passwd|token)\b\s*[:=]\s*"
+        r"[\"']?[A-Za-z0-9_\-]{16,}[\"']?",
+    ),
 )
 
 #: Extensions worth reading for secrets. Binary and vendored blobs are skipped.
-TEXT_SUFFIXES = (".py", ".md", ".json", ".yml", ".yaml", ".cff", ".toml", ".cfg",
-                 ".ini", ".txt", ".sh", ".js", ".ts", ".html")
+TEXT_SUFFIXES = (
+    ".py",
+    ".md",
+    ".json",
+    ".yml",
+    ".yaml",
+    ".cff",
+    ".toml",
+    ".cfg",
+    ".ini",
+    ".txt",
+    ".sh",
+    ".js",
+    ".ts",
+    ".html",
+)
 
 #: Files below this size are not demanded in the manifest: a licence, a template
 #: or a small config is not where evidence hides.
@@ -119,8 +140,11 @@ def check_readme_disclosure(project: Path = PROJECT) -> List[str]:
     if not readme.exists():
         return ["README.md is absent"]
     text = readme.read_text(encoding="utf-8")
-    return ["README.md is missing the %r section" % heading
-            for heading in README_REQUIRED_HEADINGS if heading not in text]
+    return [
+        "README.md is missing the %r section" % heading
+        for heading in README_REQUIRED_HEADINGS
+        if heading not in text
+    ]
 
 
 def check_certification_bar(project: Path = PROJECT) -> List[str]:
@@ -135,15 +159,16 @@ def check_certification_bar(project: Path = PROJECT) -> List[str]:
     tool = project / "tools" / "certification_bar.py"
     if not tool.exists():
         return ["tools/certification_bar.py is missing; the bar cannot be verified"]
-    spec = importlib.util.spec_from_file_location("nurse_ratchet_certification_bar",
-                                                  tool)
+    spec = importlib.util.spec_from_file_location(
+        "nurse_ratchet_certification_bar", tool
+    )
     if spec is None or spec.loader is None:
         return ["tools/certification_bar.py could not be loaded"]
     module = importlib.util.module_from_spec(spec)
     try:
         spec.loader.exec_module(module)
         ok, message = module.check(project)
-    except Exception as exc:                                   # noqa: BLE001 - reported
+    except Exception as exc:  # noqa: BLE001 - reported
         return ["certification bar could not be verified: %s" % exc]
     return [] if ok else [message]
 
@@ -161,15 +186,18 @@ def check_issue_templates(project: Path = PROJECT) -> List[str]:
     return problems
 
 
-def check_manifest_paths(manifest: Dict, project: Path = PROJECT) -> Tuple[List[str], List[str]]:
+def check_manifest_paths(
+    manifest: Dict, project: Path = PROJECT
+) -> Tuple[List[str], List[str]]:
     """Every declared path exists, and no declared path matches a deny rule."""
     problems: List[str] = []
     denied: List[str] = []
     for entry in manifest.get("ship", []):
         source = (project / entry["from"]).resolve()
         if not source.exists():
-            problems.append("manifest declares a path that does not exist: %s"
-                            % entry["from"])
+            problems.append(
+                "manifest declares a path that does not exist: %s" % entry["from"]
+            )
             continue
         if _denied(str(source), manifest):
             denied.append("%s matches a never_ship rule" % entry["from"])
@@ -205,9 +233,16 @@ def scan_secrets(path: Path) -> List[Dict]:
         for name, pattern in SECRET_PATTERNS:
             match = re.search(pattern, line)
             if match:
-                findings.append({"file": str(path), "line": number, "rule": name,
-                                 "masked": match.group(0)[:4] + "..." + "(%d chars)"
-                                 % len(match.group(0))})
+                findings.append(
+                    {
+                        "file": str(path),
+                        "line": number,
+                        "rule": name,
+                        "masked": match.group(0)[:4]
+                        + "..."
+                        + "(%d chars)" % len(match.group(0)),
+                    }
+                )
     return findings
 
 
@@ -238,16 +273,28 @@ def check_undeclared(manifest: Dict, project: Path = PROJECT) -> List[str]:
         # Byte-compiled, cached and build output is not content: it is derived
         # from declared files and differs per interpreter. Demanding it be
         # declared would produce a manifest that no longer means anything.
-        if any(part in {"__pycache__", ".pytest_cache", ".mypy_cache",
-                        ".ruff_cache", "build", "dist"} for part in path.parts):
+        if any(
+            part
+            in {
+                "__pycache__",
+                ".pytest_cache",
+                ".mypy_cache",
+                ".ruff_cache",
+                "build",
+                "dist",
+            }
+            for part in path.parts
+        ):
             continue
         if path.suffix == ".pyc" or ".egg-info" in str(path):
             continue
         if path.stat().st_size < MANIFEST_SIZE_FLOOR:
             continue
         if path.resolve() not in declared:
-            problems.append("undeclared file above %d bytes: %s"
-                            % (MANIFEST_SIZE_FLOOR, path.relative_to(project)))
+            problems.append(
+                "undeclared file above %d bytes: %s"
+                % (MANIFEST_SIZE_FLOOR, path.relative_to(project))
+            )
     return problems
 
 
@@ -274,8 +321,12 @@ def run_checks(project: Path = PROJECT, manifest_path: Optional[Path] = None) ->
         "secrets": secrets_found,
     }
     failures = sum(len(v) for v in checks.values())
-    return {"project": str(project), "checks": checks, "failures": failures,
-            "result": "PASS" if failures == 0 else "FAIL"}
+    return {
+        "project": str(project),
+        "checks": checks,
+        "failures": failures,
+        "result": "PASS" if failures == 0 else "FAIL",
+    }
 
 
 def main(argv: Optional[List[str]] = None) -> int:
@@ -286,8 +337,9 @@ def main(argv: Optional[List[str]] = None) -> int:
     parser.add_argument("--json", action="store_true")
     args = parser.parse_args(argv)
 
-    report = run_checks(Path(args.project),
-                        Path(args.manifest) if args.manifest else None)
+    report = run_checks(
+        Path(args.project), Path(args.manifest) if args.manifest else None
+    )
     if args.json:
         print(json.dumps(report, indent=1))
     else:
@@ -296,12 +348,16 @@ def main(argv: Optional[List[str]] = None) -> int:
             status = "ok" if not findings else "%d problem(s)" % len(findings)
             print("  %-18s %s" % (name, status))
             for finding in findings[:12]:
-                print("      %s" % (finding if isinstance(finding, str)
-                                    else json.dumps(finding)))
+                print(
+                    "      %s"
+                    % (finding if isinstance(finding, str) else json.dumps(finding))
+                )
         print("\n%s: %d failure(s)" % (report["result"], report["failures"]))
         if report["failures"]:
-            print("Publication is blocked. An undeclared file is not necessarily "
-                  "forbidden -- declare it in PUBLIC_MANIFEST.json, or remove it.")
+            print(
+                "Publication is blocked. An undeclared file is not necessarily "
+                "forbidden -- declare it in PUBLIC_MANIFEST.json, or remove it."
+            )
     return 0 if report["failures"] == 0 else 1
 
 

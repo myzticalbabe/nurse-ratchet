@@ -11,8 +11,8 @@
 - The artifact round-trips and is editable.
 - NO demographic inputs anywhere in the call graph (introspected).
 """
+
 import inspect
-import sys
 from pathlib import Path
 
 import pytest
@@ -20,7 +20,7 @@ import pytest
 ROOT = Path(__file__).resolve().parents[1]
 # (bootstrap removed by publicize: the package is installed)
 
-from nurse_ratchet.psyche import network as N
+from nurse_ratchet.psyche import network as N  # noqa: E402
 
 
 def _co_moving_observations(n=40):
@@ -131,8 +131,9 @@ def test_artifact_round_trips():
     net.fit_edges()
     clone = N.PersonNetwork.from_dict(net.to_dict())
     assert clone.nodes == net.nodes
-    assert [(e.a, e.b, round(e.weight, 6)) for e in clone.edges()] == \
-           [(e.a, e.b, round(e.weight, 6)) for e in net.edges()]
+    assert [(e.a, e.b, round(e.weight, 6)) for e in clone.edges()] == [
+        (e.a, e.b, round(e.weight, 6)) for e in net.edges()
+    ]
     assert clone.diagnostics()["observations"] == net.diagnostics()["observations"]
 
 
@@ -164,8 +165,18 @@ def test_activation_from_pad_is_directional():
 
 
 def test_no_demographic_inputs_exist():
-    banned = ("sex", "gender", "race", "ethnic", "age", "income", "religion",
-              "nationality", "diagnosis", "disorder")
+    banned = (
+        "sex",
+        "gender",
+        "race",
+        "ethnic",
+        "age",
+        "income",
+        "religion",
+        "nationality",
+        "diagnosis",
+        "disorder",
+    )
     for name, fn in vars(N).items():
         if not inspect.isfunction(fn) or fn.__module__ != N.__name__:
             continue

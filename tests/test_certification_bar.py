@@ -16,6 +16,7 @@ the failure mode of a claim is silent:
 * a stale README block must fail its own check, because the alternative is a
   published number that no longer matches the data behind it.
 """
+
 from __future__ import annotations
 
 import json
@@ -28,7 +29,7 @@ ROOT = Path(__file__).resolve().parents[1]
 # (bootstrap removed by publicize: the package is installed)
 sys.path.insert(0, str(ROOT / "tools"))
 
-import certification_bar as CB
+import certification_bar as CB  # noqa: E402
 
 START, END = CB.BLOCK_START, CB.BLOCK_END
 
@@ -41,11 +42,17 @@ def _evidence(note: str = "shows it") -> dict:
     return {"path": "evidence.md", "note": note}
 
 
-def _requirement(identifier: str, weight: int = 1, required: bool = True,
-                 criteria=None) -> dict:
-    return {"id": identifier, "title": identifier.replace("_", " ").title(),
-            "short": identifier, "weight": weight, "required": required,
-            "criteria": criteria if criteria is not None else [_criterion()]}
+def _requirement(
+    identifier: str, weight: int = 1, required: bool = True, criteria=None
+) -> dict:
+    return {
+        "id": identifier,
+        "title": identifier.replace("_", " ").title(),
+        "short": identifier,
+        "weight": weight,
+        "required": required,
+        "criteria": criteria if criteria is not None else [_criterion()],
+    }
 
 
 def _tree(tmp_path: Path, requirements, held=None, readme: str = None) -> dict:
@@ -54,21 +61,34 @@ def _tree(tmp_path: Path, requirements, held=None, readme: str = None) -> dict:
     if readme is None:
         readme = "# t\n\n%s\n%s\n\ntail\n" % (START, END)
     (tmp_path / "README.md").write_text(readme, encoding="utf-8")
-    data = {"schema": CB.SCHEMA, "updated": "2026-11-01", "note": "n",
-            "held": held if held is not None else [], "requirements": requirements}
-    (tmp_path / "certification.json").write_text(json.dumps(data, indent=1),
-                                                 encoding="utf-8")
+    data = {
+        "schema": CB.SCHEMA,
+        "updated": "2026-11-01",
+        "note": "n",
+        "held": held if held is not None else [],
+        "requirements": requirements,
+    }
+    (tmp_path / "certification.json").write_text(
+        json.dumps(data, indent=1), encoding="utf-8"
+    )
     return data
 
 
 # -- the percentage ---------------------------------------------------------
 
+
 def test_percentage_is_weighted_over_criteria(tmp_path):
-    _tree(tmp_path, [
-        _requirement("heavy", weight=3, criteria=[_criterion(True, _evidence()),
-                                                  _criterion()]),
-        _requirement("light", weight=1, criteria=[_criterion(True, _evidence())]),
-    ])
+    _tree(
+        tmp_path,
+        [
+            _requirement(
+                "heavy",
+                weight=3,
+                criteria=[_criterion(True, _evidence()), _criterion()],
+            ),
+            _requirement("light", weight=1, criteria=[_criterion(True, _evidence())]),
+        ],
+    )
     data = CB.load(tmp_path)
     CB.validate(data, tmp_path)
     result = CB.score(data)
@@ -89,6 +109,7 @@ def test_everything_open_is_zero_and_not_deployable(tmp_path):
 
 # -- refusals ---------------------------------------------------------------
 
+
 def test_done_criterion_without_evidence_is_refused(tmp_path):
     _tree(tmp_path, [_requirement("r", criteria=[_criterion(True, "")])])
     data = CB.load(tmp_path)
@@ -97,8 +118,14 @@ def test_done_criterion_without_evidence_is_refused(tmp_path):
 
 
 def test_evidence_path_that_does_not_exist_is_named(tmp_path):
-    _tree(tmp_path, [_requirement("r", criteria=[
-        _criterion(True, {"path": "absent.md", "note": "n"})])])
+    _tree(
+        tmp_path,
+        [
+            _requirement(
+                "r", criteria=[_criterion(True, {"path": "absent.md", "note": "n"})]
+            )
+        ],
+    )
     data = CB.load(tmp_path)
     with pytest.raises(CB.CertificationError, match="does not exist here: absent.md"):
         CB.validate(data, tmp_path)
@@ -106,7 +133,7 @@ def test_evidence_path_that_does_not_exist_is_named(tmp_path):
 
 def test_misspelled_key_is_refused_rather_than_read_as_false(tmp_path):
     criterion = _criterion()
-    criterion["donee"] = True          # the typo that would read as "not done"
+    criterion["donee"] = True  # the typo that would read as "not done"
     _tree(tmp_path, [_requirement("r", criteria=[criterion])])
     data = CB.load(tmp_path)
     with pytest.raises(CB.CertificationError, match="unknown key"):
@@ -129,18 +156,20 @@ def test_duplicate_requirement_ids_are_refused(tmp_path):
 
 # -- the gate, which is not the percentage ----------------------------------
 
+
 def test_deployable_is_a_gate_not_a_percentage(tmp_path):
     requirements = [
         _requirement("safety", weight=3, criteria=[_criterion(True, _evidence())]),
-        _requirement("legal", weight=2, criteria=[_criterion(True, _evidence()),
-                                                  _criterion()]),
+        _requirement(
+            "legal", weight=2, criteria=[_criterion(True, _evidence()), _criterion()]
+        ),
     ]
     _tree(tmp_path, requirements)
     data = CB.load(tmp_path)
     CB.validate(data, tmp_path)
     result = CB.score(data)
-    assert result["percent"] == 80.0          # (3 + 1.0) / 5
-    assert result["deployable"] is False      # one required requirement is open
+    assert result["percent"] == 80.0  # (3 + 1.0) / 5
+    assert result["deployable"] is False  # one required requirement is open
 
     requirements[1]["criteria"][1] = _criterion(True, _evidence())
     _tree(tmp_path, requirements)
@@ -151,12 +180,13 @@ def test_deployable_is_a_gate_not_a_percentage(tmp_path):
 
 # -- rendering and drift ----------------------------------------------------
 
+
 def test_bar_has_a_fixed_width_and_saturates_at_the_ends():
     assert len(CB.bar(0)) == CB.BAR_WIDTH
     assert CB.bar(0) == CB.EMPTY * CB.BAR_WIDTH
     assert CB.bar(100) == CB.FILLED * CB.BAR_WIDTH
     assert CB.bar(50) == CB.FILLED * 10 + CB.EMPTY * 10
-    assert CB.bar(-5) == CB.EMPTY * CB.BAR_WIDTH          # a bad input cannot overflow
+    assert CB.bar(-5) == CB.EMPTY * CB.BAR_WIDTH  # a bad input cannot overflow
     assert len(CB.bar(1000)) == CB.BAR_WIDTH
 
 
@@ -168,8 +198,9 @@ def test_write_then_check_round_trip_and_detected_drift(tmp_path):
     assert "100.0%" in message
 
     readme = (tmp_path / "README.md").read_text(encoding="utf-8")
-    (tmp_path / "README.md").write_text(readme.replace("100.0%", "42.0%"),
-                                        encoding="utf-8")
+    (tmp_path / "README.md").write_text(
+        readme.replace("100.0%", "42.0%"), encoding="utf-8"
+    )
     ok, message = CB.check(tmp_path)
     assert not ok
     assert "stale" in message
@@ -183,18 +214,21 @@ def test_check_refuses_a_readme_without_markers(tmp_path):
 
 
 def test_held_certificate_is_shown_and_does_not_move_the_number(tmp_path):
-    requirements = [_requirement("r", criteria=[_criterion(True, _evidence()),
-                                                _criterion()])]
+    requirements = [
+        _requirement("r", criteria=[_criterion(True, _evidence()), _criterion()])
+    ]
     _tree(tmp_path, requirements)
     baseline = CB.score(CB.load(tmp_path))["percent"]
 
-    _tree(tmp_path, requirements, held=[{"name": "SOC 2 Type II",
-                                         "issuer": "an auditor",
-                                         "date": "2026-10-01"}])
+    _tree(
+        tmp_path,
+        requirements,
+        held=[{"name": "SOC 2 Type II", "issuer": "an auditor", "date": "2026-10-01"}],
+    )
     data = CB.load(tmp_path)
     CB.validate(data, tmp_path)
     result = CB.score(data)
-    assert result["percent"] == baseline      # process evidence is not clinical evidence
+    assert result["percent"] == baseline  # process evidence is not clinical evidence
     assert "SOC 2 Type II" in CB.render(result)
 
 

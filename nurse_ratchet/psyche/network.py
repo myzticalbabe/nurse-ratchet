@@ -45,11 +45,12 @@ carries its sign in `edge_sign`), and b_i the node's baseline from the person's
 temperament. Weights are per-person and updatable from co-activation
 (`observe()`), which is the same object the intuition layer later compiles.
 """
+
 from __future__ import annotations
 
 import json
 import math
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict, Iterable, List, Optional, Sequence, Tuple
 
@@ -58,28 +59,29 @@ from typing import Dict, Iterable, List, Optional, Sequence, Tuple
 #: `except ImportError: pass` as a swallowed defect.
 try:
     from CORE.failure_ledger import note_failure
-except ImportError as _ledger_exc:                     # pragma: no cover - host always has it
+except ImportError as _ledger_exc:  # pragma: no cover - host always has it
     _LEDGER_IMPORT_ERROR = str(_ledger_exc)
 
     def note_failure(where: str, exc: BaseException | None = None) -> None:
         """Record nothing: the ledger itself is missing. Named, not silent."""
         return None
 
+
 #: The construct vocabulary a person's graph is seeded with. Nodes are
 #: constructs and observable states -- the vocabulary of a network paper, not of
 #: a diagnostic manual. A person may add, rename or delete any of them; the
 #: seeds are only a starting vocabulary so a fresh graph is not empty.
 DEFAULT_CONSTRUCTS: Tuple[str, ...] = (
-    "threat_appraisal",     # perceived danger / anticipation of harm
-    "reward_expectancy",    # expected gain from acting
-    "avoidance",            # behavioural withdrawal
-    "approach",             # behavioural engagement
-    "arousal",              # physiological activation
-    "rumination",           # repeated self-referential processing
-    "self_worth",           # global evaluation of self
-    "social_support",       # perceived available others
-    "sleep_quality",        # restorative capacity
-    "control_appraisal",    # perceived agency over outcomes
+    "threat_appraisal",  # perceived danger / anticipation of harm
+    "reward_expectancy",  # expected gain from acting
+    "avoidance",  # behavioural withdrawal
+    "approach",  # behavioural engagement
+    "arousal",  # physiological activation
+    "rumination",  # repeated self-referential processing
+    "self_worth",  # global evaluation of self
+    "social_support",  # perceived available others
+    "sleep_quality",  # restorative capacity
+    "control_appraisal",  # perceived agency over outcomes
 )
 
 #: Ridge penalty. Fixed here and exposed as an argument: shrinkage strength is a
@@ -116,13 +118,21 @@ class Edge:
         return (self.a, self.b) if self.a <= self.b else (self.b, self.a)
 
     def to_dict(self) -> dict:
-        return {"a": self.a, "b": self.b, "weight": round(self.weight, 6),
-                "support": self.support}
+        return {
+            "a": self.a,
+            "b": self.b,
+            "weight": round(self.weight, 6),
+            "support": self.support,
+        }
 
     @classmethod
     def from_dict(cls, row: dict) -> "Edge":
-        return cls(a=str(row["a"]), b=str(row["b"]),
-                   weight=float(row["weight"]), support=int(row.get("support", 0)))
+        return cls(
+            a=str(row["a"]),
+            b=str(row["b"]),
+            weight=float(row["weight"]),
+            support=int(row.get("support", 0)),
+        )
 
 
 @dataclass
@@ -142,15 +152,18 @@ def _ridge_inverse(matrix: List[List[float]], ridge: float) -> List[List[float]]
     singular matrix, which the caller reports rather than papers over.
     """
     n = len(matrix)
-    aug = [list(row) + [1.0 if i == j else 0.0 for j in range(n)]
-           for i, row in enumerate(matrix)]
+    aug = [
+        list(row) + [1.0 if i == j else 0.0 for j in range(n)]
+        for i, row in enumerate(matrix)
+    ]
     for i in range(n):
         aug[i][i] += ridge
     for col in range(n):
         pivot = max(range(col, n), key=lambda r: abs(aug[r][col]))
         if abs(aug[pivot][col]) < 1e-12:
-            raise ValueError("matrix is singular at column %d even with ridge=%.3g"
-                             % (col, ridge))
+            raise ValueError(
+                "matrix is singular at column %d even with ridge=%.3g" % (col, ridge)
+            )
         aug[col], aug[pivot] = aug[pivot], aug[col]
         pv = aug[col][col]
         aug[col] = [v / pv for v in aug[col]]
@@ -172,8 +185,9 @@ class PersonNetwork:
     editable by the person it describes (the PSYCHE invariant).
     """
 
-    def __init__(self, nodes: Optional[Sequence[str]] = None,
-                 ridge: float = DEFAULT_RIDGE) -> None:
+    def __init__(
+        self, nodes: Optional[Sequence[str]] = None, ridge: float = DEFAULT_RIDGE
+    ) -> None:
         self.nodes: List[str] = list(nodes or DEFAULT_CONSTRUCTS)
         self.ridge = float(ridge)
         self._edges: Dict[Tuple[str, str], Edge] = {}
@@ -238,7 +252,9 @@ class PersonNetwork:
             # Retention rises with sustained activation and decays with absence:
             # a construct that keeps being live is a construct whose state
             # persists, which is what w_self encodes.
-            self._w_self[node] = clamp(self._w_self[node] + 0.05 * abs(value), 0.0, 0.95)
+            self._w_self[node] = clamp(
+                self._w_self[node] + 0.05 * abs(value), 0.0, 0.95
+            )
 
     def fit_edges(self, ridge: Optional[float] = None) -> List[Edge]:
         """Estimate edges as ridge-regularised partial correlations.
@@ -252,7 +268,8 @@ class PersonNetwork:
         if len(self._observations) < 3 or len(nodes) < 3:
             self._errors.append(
                 "fit_edges skipped: %d observation(s), %d node(s) -- need 3 and 3"
-                % (len(self._observations), len(nodes)))
+                % (len(self._observations), len(nodes))
+            )
             return []
         means = {n: 0.0 for n in nodes}
         for obs in self._observations:
@@ -290,8 +307,9 @@ class PersonNetwork:
         return self.edges()
 
     # -- the GNN layer -----------------------------------------------------
-    def propagate(self, activation: Dict[str, float], steps: int = 1,
-                  gain: float = 0.6) -> Dict[str, float]:
+    def propagate(
+        self, activation: Dict[str, float], steps: int = 1, gain: float = 0.6
+    ) -> Dict[str, float]:
         """Run `steps` message-passing layers over the current edge weights.
 
         A_ji / sqrt(d_i d_j) is the symmetric degree normalisation, so a hub does
@@ -310,9 +328,13 @@ class PersonNetwork:
                     d_other = self.degree(other)
                     denom = math.sqrt((d_node or 1e-9) * (d_other or 1e-9))
                     acc += math.copysign(abs(weight) / denom, weight) * state[other]
-                nxt[node] = clamp(math.tanh(self._baseline[node]
-                                            + self._w_self[node] * state[node]
-                                            + gain * acc))
+                nxt[node] = clamp(
+                    math.tanh(
+                        self._baseline[node]
+                        + self._w_self[node] * state[node]
+                        + gain * acc
+                    )
+                )
             state = nxt
         return state
 
@@ -358,10 +380,12 @@ class PersonNetwork:
             supports = [e.support for e in self._edges.values() if node in (e.a, e.b)]
             supports.sort()
             median = supports[len(supports) // 2] if supports else 0
-            out[node] = {"strength": round(strength[node], 6),
-                         "betweenness": round(between[node] / 2.0, 6),
-                         "edges": len(self.neighbours(node)),
-                         "support": median}
+            out[node] = {
+                "strength": round(strength[node], 6),
+                "betweenness": round(between[node] / 2.0, 6),
+                "edges": len(self.neighbours(node)),
+                "support": median,
+            }
         return out
 
     def explain(self, node: str, top_k: int = 3) -> List[dict]:
@@ -385,9 +409,13 @@ class PersonNetwork:
 
     # -- diagnostics and the editable artifact ----------------------------
     def diagnostics(self) -> dict:
-        return {"nodes": len(self.nodes), "edges": len(self._edges),
-                "observations": len(self._observations), "ridge": self.ridge,
-                "errors": list(self._errors[-20:])}
+        return {
+            "nodes": len(self.nodes),
+            "edges": len(self._edges),
+            "observations": len(self._observations),
+            "ridge": self.ridge,
+            "errors": list(self._errors[-20:]),
+        }
 
     #: Which affect->construct map produced this network's activation. Stamped so
     #: a graph fitted under the hand map and one fitted under the regression are
@@ -397,18 +425,24 @@ class PersonNetwork:
     activation_source: str = "unknown"
 
     def to_dict(self) -> dict:
-        return {"nodes": list(self.nodes), "ridge": self.ridge,
-                "activation_source": self.activation_source,
-                "edges": [e.to_dict() for e in self.edges()],
-                "w_self": {k: round(v, 6) for k, v in self._w_self.items()},
-                "baseline": {k: round(v, 6) for k, v in self._baseline.items()},
-                "observations": [{"values": o.values, "at_s": o.at_s}
-                                 for o in self._observations[-50:]]}
+        return {
+            "nodes": list(self.nodes),
+            "ridge": self.ridge,
+            "activation_source": self.activation_source,
+            "edges": [e.to_dict() for e in self.edges()],
+            "w_self": {k: round(v, 6) for k, v in self._w_self.items()},
+            "baseline": {k: round(v, 6) for k, v in self._baseline.items()},
+            "observations": [
+                {"values": o.values, "at_s": o.at_s} for o in self._observations[-50:]
+            ],
+        }
 
     @classmethod
     def from_dict(cls, row: dict) -> "PersonNetwork":
-        net = cls(nodes=[str(n) for n in row.get("nodes") or DEFAULT_CONSTRUCTS],
-                  ridge=float(row.get("ridge", DEFAULT_RIDGE)))
+        net = cls(
+            nodes=[str(n) for n in row.get("nodes") or DEFAULT_CONSTRUCTS],
+            ridge=float(row.get("ridge", DEFAULT_RIDGE)),
+        )
         net.activation_source = str(row.get("activation_source") or "unknown")
         for e in row.get("edges") or []:
             net._edges[Edge.from_dict(e).key()] = Edge.from_dict(e)
@@ -417,9 +451,12 @@ class PersonNetwork:
         for k, v in (row.get("baseline") or {}).items():
             net._baseline[str(k)] = float(v)
         for o in row.get("observations") or []:
-            net._observations.append(Observation(
-                {str(k): float(v) for k, v in (o.get("values") or {}).items()},
-                float(o.get("at_s", 0.0))))
+            net._observations.append(
+                Observation(
+                    {str(k): float(v) for k, v in (o.get("values") or {}).items()},
+                    float(o.get("at_s", 0.0)),
+                )
+            )
         return net
 
     def save(self, path: str | Path) -> Path:
@@ -471,8 +508,10 @@ def _fitted_bridge() -> Optional[Dict[str, List[float]]]:
         for name, row in coeffs.items():
             values = [float(v) for v in row]
             if len(values) != len(_BRIDGE_FEATURES):
-                raise ValueError("row %r has %d coefficients, need %d"
-                                 % (name, len(values), len(_BRIDGE_FEATURES)))
+                raise ValueError(
+                    "row %r has %d coefficients, need %d"
+                    % (name, len(values), len(_BRIDGE_FEATURES))
+                )
             cleaned[str(name)] = values
         _BRIDGE_CACHE = cleaned or None
     except (OSError, ValueError, TypeError):
@@ -480,9 +519,9 @@ def _fitted_bridge() -> Optional[Dict[str, List[float]]]:
     return _BRIDGE_CACHE
 
 
-def hand_activation_from_pad(pad: Tuple[float, float, float],
-                             families: Iterable[str] = ("anxiety", "sadness")
-                             ) -> Dict[str, float]:
+def hand_activation_from_pad(
+    pad: Tuple[float, float, float], families: Iterable[str] = ("anxiety", "sadness")
+) -> Dict[str, float]:
     """The original hand-mapped bridge, kept as the fallback and as a baseline.
 
     Same directions as the fitted bridge, no estimated magnitudes. Retained on
@@ -508,9 +547,9 @@ def hand_activation_from_pad(pad: Tuple[float, float, float],
     return out
 
 
-def activation_from_pad(pad: Tuple[float, float, float],
-                        families: Iterable[str] = ("anxiety", "sadness")
-                        ) -> Dict[str, float]:
+def activation_from_pad(
+    pad: Tuple[float, float, float], families: Iterable[str] = ("anxiety", "sadness")
+) -> Dict[str, float]:
     """Map a PAD reading onto the construct nodes.
 
     Same contract as `hand_activation_from_pad`, with the coefficients estimated
@@ -543,8 +582,9 @@ def activation_from_pad(pad: Tuple[float, float, float],
     threat = 1.0 if family_set & {"anxiety", "fear", "threat"} else 0.0
     sadness = 1.0 if family_set & {"sadness", "distress"} else 0.0
     row = (1.0, p, a, d, threat, sadness)
-    return {name: clamp(sum(c * f for c, f in zip(coeffs[name], row)))
-            for name in coeffs}
+    return {
+        name: clamp(sum(c * f for c, f in zip(coeffs[name], row))) for name in coeffs
+    }
 
 
 def bridge_name() -> str:

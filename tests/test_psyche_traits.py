@@ -7,7 +7,7 @@
 - JSON round-trip is lossless (the editable-artifact property).
 - Out-of-range and incomplete responses fail loudly, never silently.
 """
-import sys
+
 from pathlib import Path
 
 import pytest
@@ -15,13 +15,22 @@ import pytest
 ROOT = Path(__file__).resolve().parents[1]
 # (bootstrap removed by publicize: the package is installed)
 
-from nurse_ratchet.psyche.traits import (DOMAINS, FACETS, ITEMS, TraitVector,
-                           domain_scores, keying_balance, score_responses)
+from nurse_ratchet.psyche.traits import (
+    DOMAINS,
+    FACETS,
+    ITEMS,
+    TraitVector,  # noqa: E402
+    domain_scores,
+    keying_balance,
+    score_responses,
+)
 
 
 def _resp_for(keyed_value: int, unkeyed_value: int):
-    return {i: (keyed_value if k else unkeyed_value)
-            for i, (_d, _f, k, _t) in enumerate(ITEMS)}
+    return {
+        i: (keyed_value if k else unkeyed_value)
+        for i, (_d, _f, k, _t) in enumerate(ITEMS)
+    }
 
 
 def test_bank_shape():

@@ -29,22 +29,24 @@ recover their levels; keying is balanced 5/5 per domain; JSON round-trips
 losslessly (this is the editable-artifact property: what you write is
 what loads).
 """
+
 from __future__ import annotations
 
 import json
 import os
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import List
 
 #: Swallows recorded when the failure ledger is unavailable (it is a stdlib-only
 #: leaf, so this fallback should never fire -- if it does, the ledger is missing).
 
 try:
     from CORE.failure_ledger import note_failure
-except ImportError:                               # never break the host
+except ImportError:  # never break the host
+
     def note_failure(where: str, exc: BaseException | None = None) -> None:
         pass  # ledger missing; evidence-vs-silence tradeoff capped here
+
 
 DOMAINS = ("O", "C", "E", "A", "N", "H")
 
@@ -58,16 +60,39 @@ DOMAIN_NAMES = {
 }
 
 FACETS: dict[str, tuple[str, ...]] = {
-    "O": ("imagination", "artistic_interests", "emotionality",
-          "adventurousness", "intellect", "liberalism"),
-    "C": ("self_efficacy", "orderliness", "dutifulness",
-          "achievement_striving", "self_discipline", "cautiousness"),
-    "E": ("friendliness", "gregariousness", "assertiveness",
-          "activity_level", "excitement_seeking", "cheerfulness"),
-    "A": ("trust", "morality", "altruism",
-          "cooperation", "modesty", "sympathy"),
-    "N": ("anxiety", "anger", "depression",
-          "self_consciousness", "immoderation", "vulnerability"),
+    "O": (
+        "imagination",
+        "artistic_interests",
+        "emotionality",
+        "adventurousness",
+        "intellect",
+        "liberalism",
+    ),
+    "C": (
+        "self_efficacy",
+        "orderliness",
+        "dutifulness",
+        "achievement_striving",
+        "self_discipline",
+        "cautiousness",
+    ),
+    "E": (
+        "friendliness",
+        "gregariousness",
+        "assertiveness",
+        "activity_level",
+        "excitement_seeking",
+        "cheerfulness",
+    ),
+    "A": ("trust", "morality", "altruism", "cooperation", "modesty", "sympathy"),
+    "N": (
+        "anxiety",
+        "anger",
+        "depression",
+        "self_consciousness",
+        "immoderation",
+        "vulnerability",
+    ),
     "H": ("sincerity", "fairness", "greed_avoidance", "modesty"),
 }
 
@@ -155,14 +180,14 @@ def score_responses(responses: dict[int, int] | list[int]) -> dict:
     """
     if isinstance(responses, list):
         if len(responses) != len(ITEMS):
-            raise ValueError("need %d responses, got %d"
-                             % (len(ITEMS), len(responses)))
+            raise ValueError("need %d responses, got %d" % (len(ITEMS), len(responses)))
         responses = dict(enumerate(responses))
     missing = [i for i in range(len(ITEMS)) if i not in responses]
     if missing:
         raise ValueError("missing responses for items %s" % missing[:10])
     facet_vals: dict[str, dict[str, list]] = {
-        d: {f: [] for f in FACETS[d]} for d in DOMAINS}
+        d: {f: [] for f in FACETS[d]} for d in DOMAINS
+    }
     for i, (domain, facet, keyed, _text) in enumerate(ITEMS):
         facet_vals[domain][facet].append(_score_item(keyed, responses[i]))
     out: dict = {}
@@ -177,8 +202,11 @@ def domain_scores(facet_scores: dict) -> dict[str, float]:
     """Collapse facets to domain means (equal facet weight)."""
     out = {}
     for domain in DOMAINS:
-        vals = [v for v in facet_scores.get(domain, {}).values()
-                if isinstance(v, (int, float))]
+        vals = [
+            v
+            for v in facet_scores.get(domain, {}).values()
+            if isinstance(v, (int, float))
+        ]
         out[domain] = round(sum(vals) / len(vals), 3) if vals else None
     return out
 
@@ -190,32 +218,39 @@ class TraitVector:
     facets: {domain: {facet: 1..5}}. Missing facets default to None and are
     excluded from domain means (partial profiles stay honest).
     """
+
     facets: dict = field(default_factory=dict)
     name: str = ""
     source: str = ""
 
     @classmethod
-    def from_responses(cls, responses, name: str = "",
-                       source: str = "ipip-style-60") -> "TraitVector":
-        return cls(facets=score_responses(responses), name=name,
-                   source=source)
+    def from_responses(
+        cls, responses, name: str = "", source: str = "ipip-style-60"
+    ) -> "TraitVector":
+        return cls(facets=score_responses(responses), name=name, source=source)
 
     def domains(self) -> dict[str, float]:
         return domain_scores(self.facets)
 
     def to_dict(self) -> dict:
-        return {"name": self.name, "source": self.source,
-                "domains": list(DOMAINS), "facets": self.facets,
-                "domain_scores": self.domains()}
+        return {
+            "name": self.name,
+            "source": self.source,
+            "domains": list(DOMAINS),
+            "facets": self.facets,
+            "domain_scores": self.domains(),
+        }
 
     def to_json(self) -> str:
         return json.dumps(self.to_dict(), indent=2, sort_keys=True)
 
     @classmethod
     def from_dict(cls, payload: dict) -> "TraitVector":
-        return cls(facets=dict(payload.get("facets", {})),
-                   name=str(payload.get("name", "")),
-                   source=str(payload.get("source", "")))
+        return cls(
+            facets=dict(payload.get("facets", {})),
+            name=str(payload.get("name", "")),
+            source=str(payload.get("source", "")),
+        )
 
     @classmethod
     def from_json(cls, text: str) -> "TraitVector":

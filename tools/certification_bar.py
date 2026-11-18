@@ -36,6 +36,7 @@ Usage:
   python tools/certification_bar.py --check    # fail if the README block drifted
   python tools/certification_bar.py --json
 """
+
 from __future__ import annotations
 
 import argparse
@@ -145,11 +146,17 @@ def validate(data: Dict, root: Path = ROOT) -> None:
             seen_ids.add(identifier)
             where = "requirement %r" % identifier
         for text_key in ("title", "short"):
-            if not isinstance(requirement.get(text_key), str) or \
-                    not requirement.get(text_key, "").strip():
+            if (
+                not isinstance(requirement.get(text_key), str)
+                or not requirement.get(text_key, "").strip()
+            ):
                 problems.append("%s: %s is empty" % (where, text_key))
         weight = requirement.get("weight")
-        if not isinstance(weight, int) or isinstance(weight, bool) or not 1 <= weight <= 5:
+        if (
+            not isinstance(weight, int)
+            or isinstance(weight, bool)
+            or not 1 <= weight <= 5
+        ):
             problems.append("%s: weight must be an integer 1..5" % where)
         if not isinstance(requirement.get("required"), bool):
             problems.append("%s: required must be true or false" % where)
@@ -166,8 +173,10 @@ def validate(data: Dict, root: Path = ROOT) -> None:
             unknown = set(criterion) - CRITERION_KEYS
             if unknown:
                 problems.append("%s: unknown key(s) %s" % (cwhere, sorted(unknown)))
-            if not isinstance(criterion.get("text"), str) or \
-                    not criterion.get("text", "").strip():
+            if (
+                not isinstance(criterion.get("text"), str)
+                or not criterion.get("text", "").strip()
+            ):
                 problems.append("%s: text is empty" % cwhere)
             done = criterion.get("done")
             if not isinstance(done, bool):
@@ -198,7 +207,8 @@ def validate(data: Dict, root: Path = ROOT) -> None:
     if problems:
         raise CertificationError(
             "%s failed %d check(s):\n  - %s"
-            % (MANIFEST_NAME, len(problems), "\n  - ".join(problems)))
+            % (MANIFEST_NAME, len(problems), "\n  - ".join(problems))
+        )
 
 
 def score(data: Dict) -> Dict:
@@ -215,16 +225,18 @@ def score(data: Dict) -> Dict:
         done = sum(1 for criterion in criteria if criterion["done"])
         weight = requirement["weight"]
         met = done == len(criteria)
-        requirements.append({
-            "id": requirement["id"],
-            "short": requirement["short"],
-            "title": requirement["title"],
-            "weight": weight,
-            "required": requirement["required"],
-            "done": done,
-            "total": len(criteria),
-            "met": met,
-        })
+        requirements.append(
+            {
+                "id": requirement["id"],
+                "short": requirement["short"],
+                "title": requirement["title"],
+                "weight": weight,
+                "required": requirement["required"],
+                "done": done,
+                "total": len(criteria),
+                "met": met,
+            }
+        )
         weighted_done += weight * (done / len(criteria))
         weighted_total += weight
         done_criteria += done
@@ -260,38 +272,60 @@ def render(result: Dict) -> str:
         "",
         "%d of %d acceptance criteria met  ·  %d of %d required requirements fully "
         "met  ·  deployable as a counselor: **%s**"
-        % (result["done_criteria"], result["total_criteria"],
-           result["required_met"], result["required_total"],
-           "yes" if result["deployable"] else "no"),
+        % (
+            result["done_criteria"],
+            result["total_criteria"],
+            result["required_met"],
+            result["required_total"],
+            "yes" if result["deployable"] else "no",
+        ),
         "",
         "| requirement | weight | criteria | state |",
         "|---|---|---|---|",
     ]
     for requirement in result["requirements"]:
-        state = "met" if requirement["met"] else \
-            ("open (required)" if requirement["required"] else "open")
-        lines.append("| %s | %d | %d/%d | %s |"
-                     % (requirement["short"], requirement["weight"],
-                        requirement["done"], requirement["total"], state))
+        state = (
+            "met"
+            if requirement["met"]
+            else ("open (required)" if requirement["required"] else "open")
+        )
+        lines.append(
+            "| %s | %d | %d/%d | %s |"
+            % (
+                requirement["short"],
+                requirement["weight"],
+                requirement["done"],
+                requirement["total"],
+                state,
+            )
+        )
     lines.append("")
     if result["unmet_required"]:
-        lines.append("Blocking requirements: %s."
-                     % ", ".join("`%s`" % identifier
-                                 for identifier in result["unmet_required"]))
+        lines.append(
+            "Blocking requirements: %s."
+            % ", ".join("`%s`" % identifier for identifier in result["unmet_required"])
+        )
     held = result["held"]
     if held:
-        lines.append("Certifications held: %s."
-                     % ", ".join("%s (%s, %s)" % (entry["name"], entry["issuer"],
-                                                  entry["date"]) for entry in held))
+        lines.append(
+            "Certifications held: %s."
+            % ", ".join(
+                "%s (%s, %s)" % (entry["name"], entry["issuer"], entry["date"])
+                for entry in held
+            )
+        )
     else:
-        lines.append("Certifications held: **none**. A held certificate is evidence "
-                     "of process, not of clinical validity, so it is recorded here "
-                     "and does not move the bar.")
+        lines.append(
+            "Certifications held: **none**. A held certificate is evidence "
+            "of process, not of clinical validity, so it is recorded here "
+            "and does not move the bar."
+        )
     lines.append("")
-    lines.append("_Generated from `%s` (`updated` %s) by `tools/certification_bar.py "
-                 "--write`. The percentage is progress toward a gate; only the "
-                 "deployable line is a gate._"
-                 % (MANIFEST_NAME, result["updated"]))
+    lines.append(
+        "_Generated from `%s` (`updated` %s) by `tools/certification_bar.py "
+        "--write`. The percentage is progress toward a gate; only the "
+        "deployable line is a gate._" % (MANIFEST_NAME, result["updated"])
+    )
     lines.append(BLOCK_END)
     return "\n".join(lines)
 
@@ -302,10 +336,11 @@ def replace_block(text: str, block: str) -> str:
     if start < 0 or end < 0:
         raise CertificationError(
             "%s has no %s / %s markers; add them where the bar belongs"
-            % (README_NAME, BLOCK_START, BLOCK_END))
+            % (README_NAME, BLOCK_START, BLOCK_END)
+        )
     if end < start:
         raise CertificationError("%s has its markers in the wrong order" % README_NAME)
-    return text[:start] + block + text[end + len(BLOCK_END):]
+    return text[:start] + block + text[end + len(BLOCK_END) :]
 
 
 def current_block(text: str) -> Optional[str]:
@@ -313,7 +348,7 @@ def current_block(text: str) -> Optional[str]:
     end = text.find(BLOCK_END)
     if start < 0 or end < start:
         return None
-    return text[start:end + len(BLOCK_END)]
+    return text[start : end + len(BLOCK_END)]
 
 
 def check(root: Path = ROOT) -> Tuple[bool, str]:
@@ -326,15 +361,22 @@ def check(root: Path = ROOT) -> Tuple[bool, str]:
     text = readme.read_text(encoding="utf-8")
     block = current_block(text)
     if block is None:
-        return False, ("%s carries no certification block; run --write after adding "
-                       "the markers" % README_NAME)
+        return False, (
+            "%s carries no certification block; run --write after adding "
+            "the markers" % README_NAME
+        )
     expected = render(result)
     if block != expected:
-        return False, ("the certification block in %s is stale relative to %s: the "
-                       "file says %.1f%%, the README shows the last generated value"
-                       % (README_NAME, MANIFEST_NAME, result["percent"]))
+        return False, (
+            "the certification block in %s is stale relative to %s: the "
+            "file says %.1f%%, the README shows the last generated value"
+            % (README_NAME, MANIFEST_NAME, result["percent"])
+        )
     return True, "certification block matches %s (%.1f%%, deployable: %s)" % (
-        MANIFEST_NAME, result["percent"], "yes" if result["deployable"] else "no")
+        MANIFEST_NAME,
+        result["percent"],
+        "yes" if result["deployable"] else "no",
+    )
 
 
 def write(root: Path = ROOT) -> str:
@@ -350,20 +392,28 @@ def write(root: Path = ROOT) -> str:
 def main(argv: Optional[Sequence[str]] = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     group = parser.add_mutually_exclusive_group()
-    group.add_argument("--check", action="store_true",
-                       help="fail when the README block drifts from the data")
-    group.add_argument("--write", action="store_true",
-                       help="regenerate the README block from the data")
+    group.add_argument(
+        "--check",
+        action="store_true",
+        help="fail when the README block drifts from the data",
+    )
+    group.add_argument(
+        "--write", action="store_true", help="regenerate the README block from the data"
+    )
     parser.add_argument("--json", action="store_true", help="print the derivation")
-    parser.add_argument("--root", default=str(ROOT), help="tree to read (tests use this)")
+    parser.add_argument(
+        "--root", default=str(ROOT), help="tree to read (tests use this)"
+    )
     args = parser.parse_args(argv)
 
     root = Path(args.root)
     try:
         if args.write:
             block = write(root)
-            print("wrote %s block into %s (%d lines)"
-                  % (BLOCK_START, README_NAME, len(block.splitlines())))
+            print(
+                "wrote %s block into %s (%d lines)"
+                % (BLOCK_START, README_NAME, len(block.splitlines()))
+            )
             return 0
         if args.check:
             ok, message = check(root)
@@ -380,14 +430,27 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         print(json.dumps(result, indent=1))
         return 0
     print("certifiable: %.1f%%  %s" % (result["percent"], bar(result["percent"])))
-    print("  %d/%d criteria, %d/%d required requirements met, deployable: %s"
-          % (result["done_criteria"], result["total_criteria"],
-             result["required_met"], result["required_total"],
-             "yes" if result["deployable"] else "no"))
+    print(
+        "  %d/%d criteria, %d/%d required requirements met, deployable: %s"
+        % (
+            result["done_criteria"],
+            result["total_criteria"],
+            result["required_met"],
+            result["required_total"],
+            "yes" if result["deployable"] else "no",
+        )
+    )
     for requirement in result["requirements"]:
-        print("  %-28s %d/%d  weight %d%s"
-              % (requirement["id"], requirement["done"], requirement["total"],
-                 requirement["weight"], "  REQUIRED" if requirement["required"] else ""))
+        print(
+            "  %-28s %d/%d  weight %d%s"
+            % (
+                requirement["id"],
+                requirement["done"],
+                requirement["total"],
+                requirement["weight"],
+                "  REQUIRED" if requirement["required"] else "",
+            )
+        )
     return 0
 
 

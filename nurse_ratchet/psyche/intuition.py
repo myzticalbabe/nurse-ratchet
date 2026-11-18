@@ -42,6 +42,7 @@ WHAT IS DELIBERATELY NOT HERE
   * No autonomous action. `read()` returns a reading; what happens next is
     `rt_agent.py`'s decision, made where a safety check can precede it.
 """
+
 from __future__ import annotations
 
 import json
@@ -55,12 +56,13 @@ from nurse_ratchet.psyche.network import PersonNetwork, clamp
 
 try:
     from CORE.failure_ledger import note_failure
-except ImportError as _ledger_exc:                     # pragma: no cover - host always has it
+except ImportError as _ledger_exc:  # pragma: no cover - host always has it
     _LEDGER_IMPORT_ERROR = str(_ledger_exc)
 
     def note_failure(where: str, exc: BaseException | None = None) -> None:
         """Record nothing: the ledger itself is missing. Named, not silent."""
         return None
+
 
 #: Below this support count a configuration is a SINGLE EVENT, not a prototype.
 #: One occurrence is not a pattern; the RPD literature's experts have thousands.
@@ -84,16 +86,21 @@ def _norm(vec: Dict[str, float]) -> float:
     return math.sqrt(sum(v * v for v in vec.values())) or 1e-12
 
 
-def cosine(a: Dict[str, float], b: Dict[str, float],
-           keys: Optional[Sequence[str]] = None) -> float:
+def cosine(
+    a: Dict[str, float], b: Dict[str, float], keys: Optional[Sequence[str]] = None
+) -> float:
     """Cosine similarity over named coordinates (missing coordinate = 0)."""
     names = list(keys) if keys is not None else sorted(set(a) | set(b))
     dot = sum(a.get(k, 0.0) * b.get(k, 0.0) for k in names)
-    return dot / (_norm({k: a.get(k, 0.0) for k in names})
-                  * _norm({k: b.get(k, 0.0) for k in names}))
+    return dot / (
+        _norm({k: a.get(k, 0.0) for k in names})
+        * _norm({k: b.get(k, 0.0) for k in names})
+    )
 
 
-def coverage_similarity(cues: Dict[str, float], profile: Dict[str, float]) -> Tuple[float, float]:
+def coverage_similarity(
+    cues: Dict[str, float], profile: Dict[str, float]
+) -> Tuple[float, float]:
     """Similarity over the coordinates actually measured, discounted by coverage.
 
     The realtime loop does not always observe every construct: a turn may carry
@@ -141,19 +148,25 @@ class Prototype:
     last_seen_s: float = 0.0
 
     def to_dict(self) -> dict:
-        return {"name": self.name,
-                "profile": {k: round(v, 6) for k, v in self.profile.items()},
-                "support": self.support, "hit_count": self.hit_count,
-                "wrong": self.wrong, "last_seen_s": self.last_seen_s}
+        return {
+            "name": self.name,
+            "profile": {k: round(v, 6) for k, v in self.profile.items()},
+            "support": self.support,
+            "hit_count": self.hit_count,
+            "wrong": self.wrong,
+            "last_seen_s": self.last_seen_s,
+        }
 
     @classmethod
     def from_dict(cls, row: dict) -> "Prototype":
-        return cls(name=str(row["name"]),
-                   profile={str(k): float(v) for k, v in (row.get("profile") or {}).items()},
-                   support=int(row.get("support", 1)),
-                   hit_count=int(row.get("hit_count", 0)),
-                   wrong=int(row.get("wrong", 0)),
-                   last_seen_s=float(row.get("last_seen_s", 0.0)))
+        return cls(
+            name=str(row["name"]),
+            profile={str(k): float(v) for k, v in (row.get("profile") or {}).items()},
+            support=int(row.get("support", 1)),
+            hit_count=int(row.get("hit_count", 0)),
+            wrong=int(row.get("wrong", 0)),
+            last_seen_s=float(row.get("last_seen_s", 0.0)),
+        )
 
 
 @dataclass
@@ -170,10 +183,15 @@ class Reading:
     profile: Dict[str, float] = field(default_factory=dict)
 
     def to_dict(self) -> dict:
-        return {"prototype": self.prototype, "confidence": round(self.confidence, 6),
-                "similarity": round(self.similarity, 6), "support": self.support,
-                "known": self.known, "latency_us": round(self.latency_us, 2),
-                "path": self.path}
+        return {
+            "prototype": self.prototype,
+            "confidence": round(self.confidence, 6),
+            "similarity": round(self.similarity, 6),
+            "support": self.support,
+            "known": self.known,
+            "latency_us": round(self.latency_us, 2),
+            "path": self.path,
+        }
 
 
 class IntuitionIndex:
@@ -183,9 +201,12 @@ class IntuitionIndex:
     learned from one graph is meaningless against another's coordinates.
     """
 
-    def __init__(self, network: PersonNetwork,
-                 min_support: int = MIN_SUPPORT,
-                 match_floor: float = MATCH_FLOOR) -> None:
+    def __init__(
+        self,
+        network: PersonNetwork,
+        min_support: int = MIN_SUPPORT,
+        match_floor: float = MATCH_FLOOR,
+    ) -> None:
         self.network = network
         self.min_support = int(min_support)
         self.match_floor = float(match_floor)
@@ -195,8 +216,12 @@ class IntuitionIndex:
         self._counter = 0
 
     # -- learning ---------------------------------------------------------
-    def absorb(self, activation: Dict[str, float], name: Optional[str] = None,
-               at_s: Optional[float] = None) -> Prototype:
+    def absorb(
+        self,
+        activation: Dict[str, float],
+        name: Optional[str] = None,
+        at_s: Optional[float] = None,
+    ) -> Prototype:
         """Fold one activation configuration into the index.
 
         If it is an instance of an existing prototype (cosine >= match_floor) the
@@ -218,8 +243,10 @@ class IntuitionIndex:
             proto = self._prototypes[best_name]
             weight = 1.0 / (proto.support + 1)
             for key, value in profile.items():
-                proto.profile[key] = clamp(proto.profile.get(key, 0.0)
-                                           + weight * (value - proto.profile.get(key, 0.0)))
+                proto.profile[key] = clamp(
+                    proto.profile.get(key, 0.0)
+                    + weight * (value - proto.profile.get(key, 0.0))
+                )
             proto.support += 1
             proto.last_seen_s = now
             return proto
@@ -249,9 +276,15 @@ class IntuitionIndex:
                 best, best_sim = proto, sim
         elapsed = (time.perf_counter() - started) * 1e6
         if best is None or best_sim < self.match_floor:
-            return Reading(prototype=None, confidence=0.0,
-                           similarity=max(0.0, best_sim), support=0,
-                           known=False, latency_us=elapsed, path="intuition")
+            return Reading(
+                prototype=None,
+                confidence=0.0,
+                similarity=max(0.0, best_sim),
+                support=0,
+                known=False,
+                latency_us=elapsed,
+                path="intuition",
+            )
         # Confidence is similarity SMALL-TIME support, and both are reported
         # separately: a 0.60 match from forty observations is not the same claim
         # as a 0.60 match from two, and a caller that only sees the product
@@ -259,10 +292,16 @@ class IntuitionIndex:
         evidence = 1.0 - math.exp(-best.support / 4.0)
         confidence = best_sim * evidence
         best.hit_count += 1
-        return Reading(prototype=best.name, confidence=confidence,
-                       similarity=best_sim, support=best.support, known=True,
-                       latency_us=elapsed, path="intuition",
-                       profile=dict(best.profile))
+        return Reading(
+            prototype=best.name,
+            confidence=confidence,
+            similarity=best_sim,
+            support=best.support,
+            known=True,
+            latency_us=elapsed,
+            path="intuition",
+            profile=dict(best.profile),
+        )
 
     # -- the deliberate path ----------------------------------------------
     def deliberate(self, cues: Dict[str, float], steps: int = 2) -> Reading:
@@ -283,15 +322,20 @@ class IntuitionIndex:
                 best, best_sim = proto, sim
         elapsed = (time.perf_counter() - started) * 1e6
         evidence = 1.0 - math.exp(-(best.support / 4.0)) if best else 0.0
-        return Reading(prototype=best.name if best else None,
-                       confidence=max(0.0, best_sim) * evidence if best else 0.0,
-                       similarity=max(0.0, best_sim), support=best.support if best else 0,
-                       known=best is not None and best_sim >= self.match_floor,
-                       latency_us=elapsed, path="deliberate",
-                       profile=propagated)
+        return Reading(
+            prototype=best.name if best else None,
+            confidence=max(0.0, best_sim) * evidence if best else 0.0,
+            similarity=max(0.0, best_sim),
+            support=best.support if best else 0,
+            known=best is not None and best_sim >= self.match_floor,
+            latency_us=elapsed,
+            path="deliberate",
+            profile=propagated,
+        )
 
-    def read_or_think(self, cues: Dict[str, float],
-                      threshold: float = DEFAULT_THRESHOLD) -> Reading:
+    def read_or_think(
+        self, cues: Dict[str, float], threshold: float = DEFAULT_THRESHOLD
+    ) -> Reading:
         """The decision this module exists for: is this worth thinking about?
 
         One rule, and it is the published one: use the recognised instance when
@@ -306,8 +350,13 @@ class IntuitionIndex:
         return slow
 
     # -- calibration: the part that keeps it honest ------------------------
-    def resolve(self, reading: Reading, outcome: str, correct: bool,
-                at_s: Optional[float] = None) -> dict:
+    def resolve(
+        self,
+        reading: Reading,
+        outcome: str,
+        correct: bool,
+        at_s: Optional[float] = None,
+    ) -> dict:
         """File what actually happened against what the reading claimed.
 
         Deliberately NOT an update. Marking a prototype `wrong` is all this does:
@@ -315,10 +364,14 @@ class IntuitionIndex:
         counted again. Editing the profile here would erase the evidence that
         the intuition was bad.
         """
-        record = {"prototype": reading.prototype, "path": reading.path,
-                  "confidence": clamp(reading.confidence), "outcome": str(outcome),
-                  "correct": bool(correct),
-                  "at_s": time.monotonic() if at_s is None else float(at_s)}
+        record = {
+            "prototype": reading.prototype,
+            "path": reading.path,
+            "confidence": clamp(reading.confidence),
+            "outcome": str(outcome),
+            "correct": bool(correct),
+            "at_s": time.monotonic() if at_s is None else float(at_s),
+        }
         self._resolutions.append(record)
         if len(self._resolutions) > MAX_RESOLUTIONS:
             self._resolutions = self._resolutions[-MAX_RESOLUTIONS:]
@@ -336,9 +389,13 @@ class IntuitionIndex:
         first field.
         """
         if not self._resolutions:
-            return {"resolved": 0, "brier": None, "accuracy": None,
-                    "mean_confidence": None,
-                    "note": "no resolved readings: calibration is unknown, not perfect"}
+            return {
+                "resolved": 0,
+                "brier": None,
+                "accuracy": None,
+                "mean_confidence": None,
+                "note": "no resolved readings: calibration is unknown, not perfect",
+            }
         squared = []
         hits = 0
         for row in self._resolutions:
@@ -346,13 +403,16 @@ class IntuitionIndex:
             squared.append((row["confidence"] - target) ** 2)
             hits += 1 if row["correct"] else 0
         count = len(self._resolutions)
-        return {"resolved": count,
-                "brier": round(sum(squared) / count, 6),
-                "accuracy": round(hits / count, 6),
-                "mean_confidence": round(
-                    sum(r["confidence"] for r in self._resolutions) / count, 6),
-                "note": "Brier 0 is perfect; compare the mean confidence against "
-                        "the accuracy rather than reading either alone"}
+        return {
+            "resolved": count,
+            "brier": round(sum(squared) / count, 6),
+            "accuracy": round(hits / count, 6),
+            "mean_confidence": round(
+                sum(r["confidence"] for r in self._resolutions) / count, 6
+            ),
+            "note": "Brier 0 is perfect; compare the mean confidence against "
+            "the accuracy rather than reading either alone",
+        }
 
     def agreement(self, cues: Dict[str, float]) -> dict:
         """Do the fast and slow paths name the same prototype, and what did each cost?
@@ -362,12 +422,16 @@ class IntuitionIndex:
         """
         fast = self.read(cues)
         slow = self.deliberate(cues)
-        return {"fast": fast.prototype, "slow": slow.prototype,
-                "agree": fast.prototype == slow.prototype,
-                "fast_us": round(fast.latency_us, 2),
-                "slow_us": round(slow.latency_us, 2),
-                "ratio": round(slow.latency_us / fast.latency_us, 2)
-                if fast.latency_us else None}
+        return {
+            "fast": fast.prototype,
+            "slow": slow.prototype,
+            "agree": fast.prototype == slow.prototype,
+            "fast_us": round(fast.latency_us, 2),
+            "slow_us": round(slow.latency_us, 2),
+            "ratio": (
+                round(slow.latency_us / fast.latency_us, 2) if fast.latency_us else None
+            ),
+        }
 
     def recommend_threshold(self) -> dict:
         """The confidence threshold at which the fast path starts to be right.
@@ -379,44 +443,66 @@ class IntuitionIndex:
         two samples.
         """
         if len(self._resolutions) < 8:
-            return {"threshold": None, "resolved": len(self._resolutions),
-                    "note": "need at least 8 resolved readings to recommend a threshold"}
-        overall = sum(1 for r in self._resolutions if r["correct"]) / len(self._resolutions)
+            return {
+                "threshold": None,
+                "resolved": len(self._resolutions),
+                "note": "need at least 8 resolved readings to recommend a threshold",
+            }
+        overall = sum(1 for r in self._resolutions if r["correct"]) / len(
+            self._resolutions
+        )
         for candidate in (0.40, 0.45, 0.50, 0.55, 0.60, 0.62, 0.65, 0.70, 0.75, 0.80):
             subset = [r for r in self._resolutions if r["confidence"] >= candidate]
             if len(subset) < 4:
                 continue
             acc = sum(1 for r in subset if r["correct"]) / len(subset)
             if acc >= overall:
-                return {"threshold": candidate, "resolved": len(self._resolutions),
-                        "subset": len(subset), "subset_accuracy": round(acc, 4),
-                        "overall_accuracy": round(overall, 4)}
-        return {"threshold": None, "resolved": len(self._resolutions),
-                "note": "no threshold beats the base rate on this data"}
+                return {
+                    "threshold": candidate,
+                    "resolved": len(self._resolutions),
+                    "subset": len(subset),
+                    "subset_accuracy": round(acc, 4),
+                    "overall_accuracy": round(overall, 4),
+                }
+        return {
+            "threshold": None,
+            "resolved": len(self._resolutions),
+            "note": "no threshold beats the base rate on this data",
+        }
 
     # -- introspection ----------------------------------------------------
     def prototypes(self) -> List[Prototype]:
-        return sorted(self._prototypes.values(),
-                      key=lambda p: (-p.support, p.name))
+        return sorted(self._prototypes.values(), key=lambda p: (-p.support, p.name))
 
     def diagnostics(self) -> dict:
-        trusted = [p for p in self._prototypes.values() if p.support >= self.min_support]
-        return {"prototypes": len(self._prototypes), "trusted": len(trusted),
-                "resolved": len(self._resolutions),
-                "min_support": self.min_support,
-                "match_floor": self.match_floor,
-                "errors": list(self._errors[-20:])}
+        trusted = [
+            p for p in self._prototypes.values() if p.support >= self.min_support
+        ]
+        return {
+            "prototypes": len(self._prototypes),
+            "trusted": len(trusted),
+            "resolved": len(self._resolutions),
+            "min_support": self.min_support,
+            "match_floor": self.match_floor,
+            "errors": list(self._errors[-20:]),
+        }
 
     def to_dict(self) -> dict:
-        return {"min_support": self.min_support, "match_floor": self.match_floor,
-                "counter": self._counter,
-                "prototypes": [p.to_dict() for p in self._prototypes.values()],
-                "resolutions": self._resolutions[-50:]}
+        return {
+            "min_support": self.min_support,
+            "match_floor": self.match_floor,
+            "counter": self._counter,
+            "prototypes": [p.to_dict() for p in self._prototypes.values()],
+            "resolutions": self._resolutions[-50:],
+        }
 
     @classmethod
     def from_dict(cls, row: dict, network: PersonNetwork) -> "IntuitionIndex":
-        index = cls(network, min_support=int(row.get("min_support", MIN_SUPPORT)),
-                    match_floor=float(row.get("match_floor", MATCH_FLOOR)))
+        index = cls(
+            network,
+            min_support=int(row.get("min_support", MIN_SUPPORT)),
+            match_floor=float(row.get("match_floor", MATCH_FLOOR)),
+        )
         index._counter = int(row.get("counter", 0))
         for p in row.get("prototypes") or []:
             proto = Prototype.from_dict(p)
@@ -433,4 +519,6 @@ class IntuitionIndex:
 
     @classmethod
     def load(cls, path: str | Path, network: PersonNetwork) -> "IntuitionIndex":
-        return cls.from_dict(json.loads(Path(path).read_text(encoding="utf-8")), network)
+        return cls.from_dict(
+            json.loads(Path(path).read_text(encoding="utf-8")), network
+        )

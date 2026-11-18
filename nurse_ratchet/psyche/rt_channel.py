@@ -31,6 +31,7 @@ is not a channel:
 absent. Nothing here decides anything -- every therapeutic decision is
 `rt_agent.py`'s, made where the triage check can run first.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -45,12 +46,13 @@ from nurse_ratchet.psyche.rt_agent import TherapeuticLoop, TurnResponse
 
 try:
     from CORE.failure_ledger import note_failure
-except ImportError as _ledger_exc:                     # pragma: no cover - host always has it
+except ImportError as _ledger_exc:  # pragma: no cover - host always has it
     _LEDGER_IMPORT_ERROR = str(_ledger_exc)
 
     def note_failure(where: str, exc: BaseException | None = None) -> None:
         """Record nothing: the ledger itself is missing. Named, not silent."""
         return None
+
 
 #: Longest line accepted. A realtime channel that reads an unbounded line can be
 #: stopped by its own input; the cap is reported rather than truncating silently.
@@ -67,8 +69,12 @@ class ChannelStats:
     safety_turns: int = 0
 
     def to_dict(self) -> dict:
-        return {"handled": self.handled, "errors": self.errors,
-                "over_budget": self.over_budget, "safety_turns": self.safety_turns}
+        return {
+            "handled": self.handled,
+            "errors": self.errors,
+            "over_budget": self.over_budget,
+            "safety_turns": self.safety_turns,
+        }
 
 
 class SessionChannel:
@@ -91,8 +97,10 @@ class SessionChannel:
         text = record.get("text", "")
         if not isinstance(text, str):
             self.stats.errors += 1
-            return self._error(request_id, "field 'text' must be a string, got %s"
-                               % type(text).__name__)
+            return self._error(
+                request_id,
+                "field 'text' must be a string, got %s" % type(text).__name__,
+            )
         appraisal = record.get("appraisal")
         if appraisal is not None and not isinstance(appraisal, dict):
             self.stats.errors += 1
@@ -114,24 +122,37 @@ class SessionChannel:
         if len(message) > self.max_message_chars:
             # Truncation is stated in the payload rather than performed quietly:
             # a cut-off sentence can read as the whole intervention.
-            message = message[:self.max_message_chars] + " [truncated]"
-        return {"id": request_id, "stance": turn.stance, "message": message,
-                "focus": turn.focus, "risk": turn.risk.risk,
-                "risk_reasons": list(turn.risk.reasons),
-                "latency_ms": round(turn.latency_ms, 4),
-                "within_budget": bool(turn.within_budget),
-                "path": turn.reading.path if turn.reading else "none",
-                "prototype": (turn.reading.prototype if turn.reading
-                              and turn.reading.prototype else None),
-                "rationale": turn.rationale}
+            message = message[: self.max_message_chars] + " [truncated]"
+        return {
+            "id": request_id,
+            "stance": turn.stance,
+            "message": message,
+            "focus": turn.focus,
+            "risk": turn.risk.risk,
+            "risk_reasons": list(turn.risk.reasons),
+            "latency_ms": round(turn.latency_ms, 4),
+            "within_budget": bool(turn.within_budget),
+            "path": turn.reading.path if turn.reading else "none",
+            "prototype": (
+                turn.reading.prototype
+                if turn.reading and turn.reading.prototype
+                else None
+            ),
+            "rationale": turn.rationale,
+        }
 
     def _error(self, request_id, detail: str) -> Dict:
-        return {"id": request_id, "error": detail, "stance": None,
-                "within_budget": None}
+        return {
+            "id": request_id,
+            "error": detail,
+            "stance": None,
+            "within_budget": None,
+        }
 
     # -- many requests ----------------------------------------------------
-    def serve(self, stream_in: IO[str], stream_out: IO[str],
-              flush: bool = True) -> ChannelStats:
+    def serve(
+        self, stream_in: IO[str], stream_out: IO[str], flush: bool = True
+    ) -> ChannelStats:
         """Read lines until EOF, writing one flushed response per input line.
 
         Malformed JSON is answered with an error record and does NOT end the
@@ -150,7 +171,9 @@ class SessionChannel:
                     parsed = json.loads(stripped)
                 except json.JSONDecodeError as exc:
                     self.stats.errors += 1
-                    record = self._error(None, "line %d is not JSON: %s" % (number, exc.msg))
+                    record = self._error(
+                        None, "line %d is not JSON: %s" % (number, exc.msg)
+                    )
                     note_failure("nurse_ratchet.psyche.rt_channel.serve", exc)
                 else:
                     if not isinstance(parsed, dict):
@@ -181,31 +204,48 @@ def demo_loop(turns: int = 3) -> Iterator[Dict]:
     net.add_edge("approach", "self_worth", 0.5, support=12)
     index = IntuitionIndex(net)
     for _ in range(6):
-        index.absorb({"threat_appraisal": 0.7, "avoidance": 0.6,
-                      "rumination": 0.5, "arousal": 0.6}, "threat-loop")
-        index.absorb({"approach": 0.6, "self_worth": 0.4,
-                      "arousal": 0.2}, "settled")
+        index.absorb(
+            {
+                "threat_appraisal": 0.7,
+                "avoidance": 0.6,
+                "rumination": 0.5,
+                "arousal": 0.6,
+            },
+            "threat-loop",
+        )
+        index.absorb({"approach": 0.6, "self_worth": 0.4, "arousal": 0.2}, "settled")
     loop = TherapeuticLoop(net, index)
     script: List[Dict] = [
         {"id": 1, "text": "long day", "appraisal": {"desirability": -0.6}},
-        {"id": 2, "text": "I got through the thing I was avoiding",
-         "appraisal": {"desirability": 0.6}},
+        {
+            "id": 2,
+            "text": "I got through the thing I was avoiding",
+            "appraisal": {"desirability": 0.6},
+        },
         {"text": "I want to die", "appraisal": {"desirability": -0.9}},
         {"id": 4, "text": 42},
     ]
     channel = SessionChannel(loop)
-    for record in script[:max(1, turns)]:
+    for record in script[: max(1, turns)]:
         yield channel.handle(record)
 
 
 def main(argv: Optional[List[str]] = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    parser.add_argument("--demo", action="store_true",
-                        help="run a self-contained 3-turn script through the channel")
-    parser.add_argument("--turns", type=int, default=3,
-                        help="how many demo turns to run (default 3)")
-    parser.add_argument("--budget-ms", type=float, default=50.0,
-                        help="per-turn latency budget reported in each response")
+    parser.add_argument(
+        "--demo",
+        action="store_true",
+        help="run a self-contained 3-turn script through the channel",
+    )
+    parser.add_argument(
+        "--turns", type=int, default=3, help="how many demo turns to run (default 3)"
+    )
+    parser.add_argument(
+        "--budget-ms",
+        type=float,
+        default=50.0,
+        help="per-turn latency budget reported in each response",
+    )
     args = parser.parse_args(argv)
 
     if args.demo:
@@ -218,8 +258,10 @@ def main(argv: Optional[List[str]] = None) -> int:
     # from nothing would make this look like it had learned something.
     net = PersonNetwork()
     loop = TherapeuticLoop(net, IntuitionIndex(net), budget_ms=args.budget_ms)
-    sys.stderr.write("[rt_channel] no artifact loaded: serving an unfitted graph; "
-                     "pass --demo for a fitted example\n")
+    sys.stderr.write(
+        "[rt_channel] no artifact loaded: serving an unfitted graph; "
+        "pass --demo for a fitted example\n"
+    )
     stats = SessionChannel(loop).serve_stdio()
     sys.stderr.write("[rt_channel] %s\n" % json.dumps(stats.to_dict()))
     return 0

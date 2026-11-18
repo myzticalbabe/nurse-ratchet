@@ -14,18 +14,16 @@
 - Messages never diagnose.
 - No demographic inputs anywhere.
 """
-import inspect
-import sys
-from pathlib import Path
 
-import pytest
+import inspect
+from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 # (bootstrap removed by publicize: the package is installed)
 
-from nurse_ratchet.psyche import rt_agent as R
-from nurse_ratchet.psyche.intuition import IntuitionIndex
-from nurse_ratchet.psyche.network import PersonNetwork
+from nurse_ratchet.psyche import rt_agent as R  # noqa: E402
+from nurse_ratchet.psyche.intuition import IntuitionIndex  # noqa: E402
+from nurse_ratchet.psyche.network import PersonNetwork  # noqa: E402
 
 
 def _loop(budget_ms=50.0):
@@ -35,14 +33,21 @@ def _loop(budget_ms=50.0):
     net.add_edge("approach", "self_worth", 0.5, support=12)
     index = IntuitionIndex(net)
     for _ in range(5):
-        index.absorb({"threat_appraisal": 0.7, "avoidance": 0.6,
-                      "rumination": 0.5, "arousal": 0.6}, "threat-loop")
-        index.absorb({"approach": 0.6, "self_worth": 0.4,
-                      "arousal": 0.2}, "settled")
+        index.absorb(
+            {
+                "threat_appraisal": 0.7,
+                "avoidance": 0.6,
+                "rumination": 0.5,
+                "arousal": 0.6,
+            },
+            "threat-loop",
+        )
+        index.absorb({"approach": 0.6, "self_worth": 0.4, "arousal": 0.2}, "settled")
     return R.TherapeuticLoop(net, index, budget_ms=budget_ms)
 
 
 # -- safety first ---------------------------------------------------------
+
 
 def test_crisis_language_takes_the_turn():
     loop = _loop()
@@ -65,8 +70,12 @@ def test_no_other_stance_can_be_chosen_when_risk_is_crisis():
 
 def test_idioms_do_not_fire_the_crisis_router():
     loop = _loop()
-    for phrase in ("I am just killing time", "dead tired today",
-                   "dying to know how this ends", "that deadline is brutal"):
+    for phrase in (
+        "I am just killing time",
+        "dead tired today",
+        "dying to know how this ends",
+        "that deadline is brutal",
+    ):
         out = loop.turn(phrase)
         assert out.risk.risk == "low", (phrase, out.risk.to_dict())
         assert out.stance != "safety", phrase
@@ -86,6 +95,7 @@ def test_a_low_risk_reading_says_why_it_is_low():
 
 # -- stance selection -----------------------------------------------------
 
+
 def _stance(pad, activation, text=""):
     loop = _loop()
     loop.pad = pad
@@ -95,44 +105,51 @@ def _stance(pad, activation, text=""):
 
 
 def test_arousal_above_the_window_regulates_rather_than_teaches():
-    stance, _focus, rationale = _stance((-0.2, 0.95, -0.1),
-                                        {"avoidance": 0.8, "rumination": 0.6})
+    stance, _focus, rationale = _stance(
+        (-0.2, 0.95, -0.1), {"avoidance": 0.8, "rumination": 0.6}
+    )
     assert stance == "regulate"
     assert "learning window" in rationale
 
 
 def test_avoidance_in_a_workable_state_selects_skills():
-    stance, focus, _rationale = _stance((0.2, 0.3, 0.1),
-                                        {"avoidance": 0.8, "approach": 0.1})
+    stance, focus, _rationale = _stance(
+        (0.2, 0.3, 0.1), {"avoidance": 0.8, "approach": 0.1}
+    )
     assert stance == "skills"
     assert focus == "avoidance"
 
 
 def test_distress_is_acknowledged_before_it_is_reframed():
-    stance, _focus, _rationale = _stance((-0.7, 0.2, -0.2),
-                                         {"threat_appraisal": 0.5})
+    stance, _focus, _rationale = _stance((-0.7, 0.2, -0.2), {"threat_appraisal": 0.5})
     assert stance == "validate"
 
 
 def test_nothing_acute_consolidates():
-    stance, _focus, _rationale = _stance((0.6, 0.2, 0.4),
-                                         {"approach": 0.7, "self_worth": 0.5})
+    stance, _focus, _rationale = _stance(
+        (0.6, 0.2, 0.4), {"approach": 0.7, "self_worth": 0.5}
+    )
     assert stance == "consolidate"
 
 
 def test_elevated_risk_dampens_change_work():
     loop = _loop()
-    activation = {"self_worth": -0.8, "avoidance": 0.8, "rumination": 0.8,
-                  "threat_appraisal": 0.6}
+    activation = {
+        "self_worth": -0.8,
+        "avoidance": 0.8,
+        "rumination": 0.8,
+        "threat_appraisal": 0.6,
+    }
     risk = R.triage("", activation)
     assert risk.risk == "elevated"
     name, _focus, rationale = loop._select(activation, risk, None)
     assert "risk=elevated" in rationale
-    assert name != "safety"          # elevated is not crisis
+    assert name != "safety"  # elevated is not crisis
     assert name in ("validate", "regulate", "consolidate")
 
 
 # -- the loop as a loop ---------------------------------------------------
+
 
 def test_every_message_is_short_and_never_diagnoses():
     loop = _loop()
@@ -146,8 +163,10 @@ def test_every_message_is_short_and_never_diagnoses():
 def test_the_turn_is_deterministic():
     def run():
         loop = _loop()
-        return [loop.turn(text).stance for text in
-                ("", "hard day", "I want to die", "a bit better")]
+        return [
+            loop.turn(text).stance
+            for text in ("", "hard day", "I want to die", "a bit better")
+        ]
 
     assert run() == run()
 
@@ -212,8 +231,18 @@ def test_felt_and_displayed_are_distinguished_at_the_boundary():
 
 
 def test_no_demographic_inputs_exist():
-    banned = ("sex", "gender", "race", "ethnic", "age", "income", "religion",
-              "nationality", "diagnosis", "disorder")
+    banned = (
+        "sex",
+        "gender",
+        "race",
+        "ethnic",
+        "age",
+        "income",
+        "religion",
+        "nationality",
+        "diagnosis",
+        "disorder",
+    )
     for name, fn in vars(R).items():
         if not inspect.isfunction(fn) or fn.__module__ != R.__name__:
             continue
@@ -225,7 +254,10 @@ def test_no_demographic_inputs_exist():
 
 
 def test_triage_reasons_are_always_present():
-    for risk in (R.triage("hello"), R.triage("I want to die"),
-                 R.triage("", {"self_worth": -0.9, "avoidance": 0.9, "rumination": 0.9})):
+    for risk in (
+        R.triage("hello"),
+        R.triage("I want to die"),
+        R.triage("", {"self_worth": -0.9, "avoidance": 0.9, "rumination": 0.9}),
+    ):
         assert risk.reasons
         assert risk.risk in R.RISK_LEVELS

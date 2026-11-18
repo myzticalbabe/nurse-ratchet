@@ -11,8 +11,8 @@
 - TD bridge maps learning signals to appraisal checks monotonically.
 - JSON-representable outputs throughout (artifact property).
 """
+
 import inspect
-import sys
 from pathlib import Path
 
 import pytest
@@ -20,8 +20,8 @@ import pytest
 ROOT = Path(__file__).resolve().parents[1]
 # (bootstrap removed by publicize: the package is installed)
 
-from nurse_ratchet.psyche import affect as A
-from nurse_ratchet.psyche.traits import TraitVector
+from nurse_ratchet.psyche import affect as A  # noqa: E402
+from nurse_ratchet.psyche.traits import TraitVector  # noqa: E402
 
 
 def _fams(out):
@@ -75,8 +75,7 @@ def test_intensity_scales_with_likelihood_and_effort():
 def test_mixed_emotions_ranked():
     out = A.appraise_event(0.8, confirmed=True)
     assert len(out) >= 2  # satisfaction + joy tone, never a single label
-    assert [i for _f, i, _b in out] == sorted(
-        [i for _f, i, _b in out], reverse=True)
+    assert [i for _f, i, _b in out] == sorted([i for _f, i, _b in out], reverse=True)
 
 
 def test_temperament_directions_and_replaceability():
@@ -86,7 +85,8 @@ def test_temperament_directions_and_replaceability():
     custom = {k: dict(v) for k, v in A.TEMPERAMENT_WEIGHTS.items()}
     custom["P"]["N"] = 0.0
     assert A.temperament(high_n, custom)[0] == pytest.approx(
-        A.temperament(low_n, custom)[0])
+        A.temperament(low_n, custom)[0]
+    )
     # partial profiles stay honest (no imputed domains)
     assert A.temperament({"N": 5.0})[0] < 0
 
@@ -105,8 +105,9 @@ def test_regulation_dissociation():
     # Reappraisal edits desirability -> the downstream feeling moves.
     assert A.reappraise_desirability(-0.8, 0.25) == pytest.approx(-0.2)
     moved = A.emotion_to_pad(
-        A.appraise_event(A.reappraise_desirability(-0.8, 0.25),
-                         confirmed=True)[0][0], 0.8)
+        A.appraise_event(A.reappraise_desirability(-0.8, 0.25), confirmed=True)[0][0],
+        0.8,
+    )
     assert A.pad_distance(moved, felt) > 0.1
     # Suppression edits display only: felt state untouched by construction.
     assert A.suppress_display(felt, 0.1)[0] != pytest.approx(felt[0])
@@ -131,9 +132,11 @@ def test_no_demographic_inputs():
     import ast as _ast
     import importlib
     import re
+
     banned = re.compile(
-        r"^(gender|sex|female|male|race|ethnicity|age|demographic|"
-        r"stereotype)$", re.I)
+        r"^(gender|sex|female|male|race|ethnicity|age|demographic|" r"stereotype)$",
+        re.I,
+    )
     # Discovered, not hard-coded. The fixed list had gone stale: it checked six
     # modules and missed network/intuition/rt_agent/rt_channel, which were added
     # later and are exactly where a construct-shaped template would hide. It also
@@ -147,7 +150,9 @@ def test_no_demographic_inputs():
     unscanned = []
     for info in pkgutil.iter_modules(_pkg.__path__):
         try:
-            modules.append(importlib.import_module("%s.%s" % (_pkg.__name__, info.name)))
+            modules.append(
+                importlib.import_module("%s.%s" % (_pkg.__name__, info.name))
+            )
         except ImportError as exc:
             # A module that will not import is UNSCANNED source, and this test's
             # whole claim is "no module branches on demographics" -- so a skip
@@ -156,7 +161,8 @@ def test_no_demographic_inputs():
             # assertion that holds today and names the defect if it stops.
             unscanned.append("%s (%s)" % (info.name, exc))
     assert not unscanned, (
-        "modules the invariance check would silently skip: %s" % unscanned)
+        "modules the invariance check would silently skip: %s" % unscanned
+    )
     assert modules, "no PSYCHE modules were importable -- the scan is not running"
     for mod in modules:
         tree = _ast.parse(inspect.getsource(mod))

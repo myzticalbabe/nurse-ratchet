@@ -42,6 +42,7 @@ Usage (see `tools/elicit.py` for the CLI):
     record = score_session(answers, pad=(-0.4, 0.6, -0.3), session=session)
     record.to_row()          # one JSON object, ready for storage
 """
+
 from __future__ import annotations
 
 import hashlib
@@ -64,8 +65,16 @@ SCALE_MIDPOINT = 2
 #: nodes leaves one permanently unobservable, and the graph would then be a
 #: picture of the instrument rather than of the person.
 CONSTRUCTS: Tuple[str, ...] = (
-    "threat_appraisal", "reward_expectancy", "avoidance", "approach", "arousal",
-    "rumination", "self_worth", "social_support", "sleep_quality", "control_appraisal",
+    "threat_appraisal",
+    "reward_expectancy",
+    "avoidance",
+    "approach",
+    "arousal",
+    "rumination",
+    "self_worth",
+    "social_support",
+    "sleep_quality",
+    "control_appraisal",
 )
 
 
@@ -79,8 +88,12 @@ class Item:
     reverse: bool = False
 
     def to_dict(self) -> Dict[str, object]:
-        return {"key": self.key, "construct": self.construct,
-                "text": self.text, "reverse": self.reverse}
+        return {
+            "key": self.key,
+            "construct": self.construct,
+            "text": self.text,
+            "reverse": self.reverse,
+        }
 
 
 #: Three items per construct. The `reverse` item is not decoration: without it a
@@ -88,54 +101,73 @@ class Item:
 #: resulting graph is a straight line that no estimator can distinguish from a
 #: real profile.
 ITEMS: Tuple[Item, ...] = (
-    Item("threat_1", "threat_appraisal", "Today I felt like something bad was about to happen."),
-    Item("threat_2", "threat_appraisal", "Today my body was braced, as if for a shock."),
+    Item(
+        "threat_1",
+        "threat_appraisal",
+        "Today I felt like something bad was about to happen.",
+    ),
+    Item(
+        "threat_2", "threat_appraisal", "Today my body was braced, as if for a shock."
+    ),
     Item("threat_3", "threat_appraisal", "Today I felt safe.", reverse=True),
-
     Item("reward_1", "reward_expectancy", "Today I expected something to go well."),
     Item("reward_2", "reward_expectancy", "Today I could picture a good outcome."),
-    Item("reward_3", "reward_expectancy", "Today I expected to be let down.", reverse=True),
-
+    Item(
+        "reward_3",
+        "reward_expectancy",
+        "Today I expected to be let down.",
+        reverse=True,
+    ),
     Item("avoid_1", "avoidance", "Today I wanted to be left alone."),
     Item("avoid_2", "avoidance", "Today I avoided something I needed to do."),
     Item("avoid_3", "avoidance", "Today I reached out to someone first.", reverse=True),
-
     Item("approach_1", "approach", "Today I started something I had been putting off."),
     Item("approach_2", "approach", "Today I moved toward what I wanted."),
     Item("approach_3", "approach", "Today I stayed put rather than act.", reverse=True),
-
     Item("arousal_1", "arousal", "Today I felt keyed up."),
     Item("arousal_2", "arousal", "Today my thoughts were racing."),
     Item("arousal_3", "arousal", "Today I felt flat and slow.", reverse=True),
-
     Item("rumin_1", "rumination", "Today the same thought kept coming back."),
     Item("rumin_2", "rumination", "Today I went over a conversation again and again."),
     Item("rumin_3", "rumination", "Today my mind moved on easily.", reverse=True),
-
     Item("worth_1", "self_worth", "Today I felt like a decent person."),
     Item("worth_2", "self_worth", "Today I was on my own side."),
     Item("worth_3", "self_worth", "Today I felt like a failure.", reverse=True),
-
     Item("support_1", "social_support", "Today I had someone I could tell things to."),
-    Item("support_2", "social_support", "Today I felt alone in what I was carrying.", reverse=True),
+    Item(
+        "support_2",
+        "social_support",
+        "Today I felt alone in what I was carrying.",
+        reverse=True,
+    ),
     Item("support_3", "social_support", "Today someone checked in on me."),
-
     Item("sleep_1", "sleep_quality", "Today I woke up rested."),
     Item("sleep_2", "sleep_quality", "Today I was running on empty.", reverse=True),
     Item("sleep_3", "sleep_quality", "Today I slept enough."),
-
     Item("control_1", "control_appraisal", "Today I had a say in what happened to me."),
-    Item("control_2", "control_appraisal", "Today things happened to me rather than because of me.",
-         reverse=True),
+    Item(
+        "control_2",
+        "control_appraisal",
+        "Today things happened to me rather than because of me.",
+        reverse=True,
+    ),
     Item("control_3", "control_appraisal", "Today I could steer my own day."),
 )
 
 #: Affect is measured on the same three axes the loop already carries, on the same
 #: -1..1 range, so a record needs no rescaling before it reaches `activation_from_pad`.
 AFFECT_ITEMS: Tuple[Tuple[str, str, str], ...] = (
-    ("pleasure", "Right now, how pleasant does this moment feel?", "-1 = very unpleasant, +1 = very pleasant"),
+    (
+        "pleasure",
+        "Right now, how pleasant does this moment feel?",
+        "-1 = very unpleasant, +1 = very pleasant",
+    ),
     ("arousal", "Right now, how activated do you feel?", "-1 = flat, +1 = keyed up"),
-    ("dominance", "Right now, how much is this moment yours to steer?", "-1 = not at all, +1 = entirely"),
+    (
+        "dominance",
+        "Right now, how much is this moment yours to steer?",
+        "-1 = not at all, +1 = entirely",
+    ),
 )
 
 
@@ -160,8 +192,11 @@ class Session:
     seed: int = 0
 
     def to_dict(self) -> Dict[str, object]:
-        return {"order": list(self.order), "seed": self.seed,
-                "instrument": INSTRUMENT_VERSION}
+        return {
+            "order": list(self.order),
+            "seed": self.seed,
+            "instrument": INSTRUMENT_VERSION,
+        }
 
 
 def new_session(seed: Optional[int] = None) -> Session:
@@ -196,8 +231,16 @@ class Record:
     @property
     def digest(self) -> str:
         """Content hash, so a stored record can be proven unedited later."""
-        payload = repr((self.taken_at, self.pad, sorted(self.constructs.items()),
-                        sorted(self.answers.items()), self.order, self.instrument))
+        payload = repr(
+            (
+                self.taken_at,
+                self.pad,
+                sorted(self.constructs.items()),
+                sorted(self.answers.items()),
+                self.order,
+                self.instrument,
+            )
+        )
         return hashlib.sha256(payload.encode("utf-8")).hexdigest()
 
     def to_row(self) -> Dict[str, object]:
@@ -208,23 +251,31 @@ class Record:
         whose content was edited and then resaved would otherwise carry a
         matching hash and pass.
         """
-        return {"taken_at": self.taken_at, "pad": list(self.pad),
-                "constructs": dict(self.constructs), "answers": dict(self.answers),
-                "order": list(self.order), "instrument": self.instrument,
-                "note": self.note, "digest": self.digest}
+        return {
+            "taken_at": self.taken_at,
+            "pad": list(self.pad),
+            "constructs": dict(self.constructs),
+            "answers": dict(self.answers),
+            "order": list(self.order),
+            "instrument": self.instrument,
+            "note": self.note,
+            "digest": self.digest,
+        }
 
     @classmethod
     def from_row(cls, row: Dict[str, object]) -> "Record":
-        return cls(taken_at=str(row["taken_at"]),
-                   pad=tuple(float(v) for v in row["pad"]),  # type: ignore[arg-type]
-                   constructs={str(k): float(v)
-                               for k, v in (row.get("constructs") or {}).items()},
-                   answers={str(k): int(v)
-                            for k, v in (row.get("answers") or {}).items()},
-                   order=[str(k) for k in (row.get("order") or [])],
-                   instrument=str(row.get("instrument", INSTRUMENT_VERSION)),
-                   note=str(row.get("note", "")),
-                   stored_digest=str(row.get("digest", "")))
+        return cls(
+            taken_at=str(row["taken_at"]),
+            pad=tuple(float(v) for v in row["pad"]),  # type: ignore[arg-type]
+            constructs={
+                str(k): float(v) for k, v in (row.get("constructs") or {}).items()
+            },
+            answers={str(k): int(v) for k, v in (row.get("answers") or {}).items()},
+            order=[str(k) for k in (row.get("order") or [])],
+            instrument=str(row.get("instrument", INSTRUMENT_VERSION)),
+            note=str(row.get("note", "")),
+            stored_digest=str(row.get("digest", "")),
+        )
 
 
 class IncompleteSession(ValueError):
@@ -236,9 +287,14 @@ class IncompleteSession(ValueError):
     """
 
 
-def score_session(answers: Dict[str, int], pad: Sequence[float], *,
-                  taken_at: str, order: Optional[List[str]] = None,
-                  note: str = "") -> Record:
+def score_session(
+    answers: Dict[str, int],
+    pad: Sequence[float],
+    *,
+    taken_at: str,
+    order: Optional[List[str]] = None,
+    note: str = "",
+) -> Record:
     """Score a completed session onto the ten constructs, on -1..1.
 
     Reverse items are flipped before aggregation, then the construct mean is
@@ -248,10 +304,10 @@ def score_session(answers: Dict[str, int], pad: Sequence[float], *,
     """
     missing = [item.key for item in ITEMS if item.key not in answers]
     if missing:
-        raise IncompleteSession("%d item(s) unanswered: %s"
-                               % (len(missing), ", ".join(missing[:6])))
-    bad = {k: v for k, v in answers.items()
-           if not isinstance(v, int) or v not in SCALE}
+        raise IncompleteSession(
+            "%d item(s) unanswered: %s" % (len(missing), ", ".join(missing[:6]))
+        )
+    bad = {k: v for k, v in answers.items() if not isinstance(v, int) or v not in SCALE}
     if bad:
         raise ValueError("answers outside %r: %r" % (SCALE, bad))
     if len(pad) != 3:
@@ -271,10 +327,14 @@ def score_session(answers: Dict[str, int], pad: Sequence[float], *,
         mean = total / len(items)
         constructs[construct] = round((mean - SCALE_MIDPOINT) / SCALE_MIDPOINT, 4)
 
-    return Record(taken_at=taken_at,
-                  pad=(float(pad[0]), float(pad[1]), float(pad[2])),
-                  constructs=constructs, answers=dict(answers),
-                  order=list(order or []), note=note)
+    return Record(
+        taken_at=taken_at,
+        pad=(float(pad[0]), float(pad[1]), float(pad[2])),
+        constructs=constructs,
+        answers=dict(answers),
+        order=list(order or []),
+        note=note,
+    )
 
 
 def homogeneity(records: Sequence[Record]) -> Dict[str, float]:
@@ -292,17 +352,24 @@ def homogeneity(records: Sequence[Record]) -> Dict[str, float]:
     totals: Dict[str, List[float]] = {}
     for record in records:
         for construct, items in _by_construct().items():
-            forward = [record.answers.get(i.key, SCALE_MIDPOINT)
-                       for i in items if not i.reverse and i.key in record.answers]
-            reverse = [max(SCALE) + min(SCALE) - record.answers.get(i.key, SCALE_MIDPOINT)
-                       for i in items if i.reverse and i.key in record.answers]
+            forward = [
+                record.answers.get(i.key, SCALE_MIDPOINT)
+                for i in items
+                if not i.reverse and i.key in record.answers
+            ]
+            reverse = [
+                max(SCALE) + min(SCALE) - record.answers.get(i.key, SCALE_MIDPOINT)
+                for i in items
+                if i.reverse and i.key in record.answers
+            ]
             if forward and reverse:
                 gap = abs(sum(forward) / len(forward) - sum(reverse) / len(reverse))
                 totals.setdefault(construct, []).append(gap)
     return {c: round(sum(v) / len(v), 3) for c, v in totals.items()}
 
 
-def as_pad_construct_pairs(records: Sequence[Record]) -> List[Tuple[Tuple[float, float, float],
-                                                                    Dict[str, float]]]:
+def as_pad_construct_pairs(
+    records: Sequence[Record],
+) -> List[Tuple[Tuple[float, float, float], Dict[str, float]]]:
     """The shape `tools/fit_affect_bridge.py --from-records` consumes."""
     return [(r.pad, r.constructs) for r in records if r.constructs]

@@ -36,6 +36,7 @@ Usage:
 Exit codes: 0 = ok, 2 = refused (incomplete session, no records, failed digest),
 1 = error.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -56,8 +57,15 @@ sys.path.insert(0, str(ROOT / "tools"))
 from fit_affect_bridge import MIN_PEOPLE_RECORDS  # noqa: E402
 from nurse_ratchet.psyche import elicitation  # noqa: E402
 from nurse_ratchet.psyche.elicitation import (  # noqa: E402
-    INSTRUMENT_VERSION, ITEMS, SCALE_LABELS, Record, Session, IncompleteSession,
-    homogeneity, new_session, score_session,
+    INSTRUMENT_VERSION,
+    ITEMS,
+    SCALE_LABELS,
+    Record,
+    Session,
+    IncompleteSession,
+    homogeneity,
+    new_session,
+    score_session,
 )
 
 #: Resolved from the environment so a monorepo run and an installed run agree, and
@@ -137,8 +145,11 @@ def ask(answers: Dict[str, int], order: List[str]) -> Dict[str, int]:
             continue
         item = by_key[key]
         prompt = "  %2d/%d  %s  [0-4: %s]  " % (
-            index, len(order), item.text, ", ".join("%d=%s" % (i, label)
-                                                    for i, label in enumerate(SCALE_LABELS)))
+            index,
+            len(order),
+            item.text,
+            ", ".join("%d=%s" % (i, label) for i, label in enumerate(SCALE_LABELS)),
+        )
         while True:
             raw = input(prompt).strip()
             if raw.isdigit() and int(raw) in elicitation.SCALE:
@@ -150,33 +161,51 @@ def ask(answers: Dict[str, int], order: List[str]) -> Dict[str, int]:
 
 def render_items(as_json: bool) -> str:
     if as_json:
-        return json.dumps({"instrument": INSTRUMENT_VERSION,
-                           "scale": list(elicitation.SCALE),
-                           "scale_labels": list(SCALE_LABELS),
-                           "items": [item.to_dict() for item in ITEMS]}, indent=1)
-    lines = ["%s  (%d items, %d constructs, scale 0-4)"
-             % (INSTRUMENT_VERSION, len(ITEMS), len(elicitation.CONSTRUCTS)), ""]
+        return json.dumps(
+            {
+                "instrument": INSTRUMENT_VERSION,
+                "scale": list(elicitation.SCALE),
+                "scale_labels": list(SCALE_LABELS),
+                "items": [item.to_dict() for item in ITEMS],
+            },
+            indent=1,
+        )
+    lines = [
+        "%s  (%d items, %d constructs, scale 0-4)"
+        % (INSTRUMENT_VERSION, len(ITEMS), len(elicitation.CONSTRUCTS)),
+        "",
+    ]
     grouped: Dict[str, List] = {}
     for item in ITEMS:
         grouped.setdefault(item.construct, []).append(item)
     for construct in elicitation.CONSTRUCTS:
         lines.append("  %s" % construct)
         for item in grouped.get(construct, []):
-            lines.append("    [%s] %s%s" % (item.key, item.text,
-                                            "  (reverse-scored)" if item.reverse else ""))
-    lines += ["", "These items were written for this project. They are not a validated",
-              "instrument, they have no norms, and no factor structure has been",
-              "established for them. See src/PSYCHE/elicitation.py."]
+            lines.append(
+                "    [%s] %s%s"
+                % (item.key, item.text, "  (reverse-scored)" if item.reverse else "")
+            )
+    lines += [
+        "",
+        "These items were written for this project. They are not a validated",
+        "instrument, they have no norms, and no factor structure has been",
+        "established for them. See src/PSYCHE/elicitation.py.",
+    ]
     return "\n".join(lines)
 
 
 def render_stats(records: Sequence[Record], path: Path) -> str:
     if not records:
-        return ("no records in %s\n"
-                "That is the current state the fitter refuses on, not an error." % path)
-    lines = ["%d record(s) in %s" % (len(records), path),
-             "instrument(s): %s" % ", ".join(sorted({r.instrument for r in records})),
-             "range: %s .. %s" % (records[0].taken_at, records[-1].taken_at), ""]
+        return (
+            "no records in %s\n"
+            "That is the current state the fitter refuses on, not an error." % path
+        )
+    lines = [
+        "%d record(s) in %s" % (len(records), path),
+        "instrument(s): %s" % ", ".join(sorted({r.instrument for r in records})),
+        "range: %s .. %s" % (records[0].taken_at, records[-1].taken_at),
+        "",
+    ]
     gaps = homogeneity(records)
     lines.append("reverse-vs-forward agreement (lower is better; >1.0 means the")
     lines.append("person answered the direction, not the content):")
@@ -186,12 +215,22 @@ def render_stats(records: Sequence[Record], path: Path) -> str:
     lines.append("")
     lines.append("Two different fits read this store, with different thresholds:")
     lines.append("  tools/psyche_fit_pams.py      graph edges -- needs 3 sessions, one")
-    lines.append("                                per observation; 4 gives nodes and no")
-    lines.append("                                edges, which is the honest answer at 4.")
-    lines.append("  tools/fit_affect_bridge.py    affect -> construct -- needs %d sessions"
-                 % MIN_PEOPLE_RECORDS)
-    lines.append("    --from-records              from ONE instrument version, and refuses")
-    lines.append("                                below that rather than fitting a line")
+    lines.append(
+        "                                per observation; 4 gives nodes and no"
+    )
+    lines.append(
+        "                                edges, which is the honest answer at 4."
+    )
+    lines.append(
+        "  tools/fit_affect_bridge.py    affect -> construct -- needs %d sessions"
+        % MIN_PEOPLE_RECORDS
+    )
+    lines.append(
+        "    --from-records              from ONE instrument version, and refuses"
+    )
+    lines.append(
+        "                                below that rather than fitting a line"
+    )
     lines.append("                                through four points.")
     return "\n".join(lines)
 
@@ -205,27 +244,34 @@ def verify_digests(records: Sequence[Record]) -> List[str]:
     project has already paid for once in `fit_affect_bridge.py`. A record with no
     stored digest is reported too: it came from somewhere that did not hash it.
     """
-    return [r.taken_at for r in records
-            if not r.stored_digest or r.digest != r.stored_digest]
+    return [
+        r.taken_at
+        for r in records
+        if not r.stored_digest or r.digest != r.stored_digest
+    ]
 
 
 def main(argv: Optional[Sequence[str]] = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    parser.add_argument("--store", help="record store (default %s or $%s)"
-                        % (DEFAULT_STORE, STORE_ENV))
+    parser.add_argument(
+        "--store", help="record store (default %s or $%s)" % (DEFAULT_STORE, STORE_ENV)
+    )
     sub = parser.add_subparsers(dest="command")
 
     items_cmd = sub.add_parser("items", help="print the battery")
     items_cmd.add_argument("--json", action="store_true")
 
     record_cmd = sub.add_parser("record", help="score one session and append it")
-    record_cmd.add_argument("--pad", required=True,
-                            help="pleasure,arousal,dominance on -1..1")
+    record_cmd.add_argument(
+        "--pad", required=True, help="pleasure,arousal,dominance on -1..1"
+    )
     record_cmd.add_argument("--answers", default="", help="key=value,key=value")
-    record_cmd.add_argument("--ask", action="store_true",
-                            help="prompt for any items not given in --answers")
-    record_cmd.add_argument("--seed", type=int,
-                            help="item order seed, so a re-run asks the same order")
+    record_cmd.add_argument(
+        "--ask", action="store_true", help="prompt for any items not given in --answers"
+    )
+    record_cmd.add_argument(
+        "--seed", type=int, help="item order seed, so a re-run asks the same order"
+    )
     record_cmd.add_argument("--note", default="")
     record_cmd.add_argument("--at", help="ISO timestamp (default: now, UTC)")
 
@@ -251,8 +297,10 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         return 0
 
     if command == "pairs":
-        rows = [dict(r.to_row(), pad=list(r.pad), constructs=dict(r.constructs))
-                for r in read_store(path)]
+        rows = [
+            dict(r.to_row(), pad=list(r.pad), constructs=dict(r.constructs))
+            for r in read_store(path)
+        ]
         if not rows:
             print("no records in %s -- nothing to emit" % path, file=sys.stderr)
             return 2
@@ -280,22 +328,29 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
             return 2
     taken_at = args.at or datetime.now(timezone.utc).isoformat(timespec="seconds")
     try:
-        record = score_session(answers, pad, taken_at=taken_at,
-                               order=session.order, note=args.note)
+        record = score_session(
+            answers, pad, taken_at=taken_at, order=session.order, note=args.note
+        )
     except IncompleteSession as exc:
         # A partial session is not a shorter record: scoring 24 of 30 items would
         # renormalise the missing construct and every stored record would carry a
         # small unmarked error in whatever direction was skipped.
         print("REFUSED: %s" % exc, file=sys.stderr)
-        print("Nothing written. A partial session is not a shorter record.",
-              file=sys.stderr)
+        print(
+            "Nothing written. A partial session is not a shorter record.",
+            file=sys.stderr,
+        )
         return 2
     append_store(path, record)
     print("appended %s  digest %s" % (record.taken_at, record.digest[:16]))
-    print("  %d item(s), instrument %s, store %s"
-          % (len(answers), record.instrument, path))
-    print("  constructs: %s" % ", ".join("%s %+.2f" % (k, v)
-                                         for k, v in sorted(record.constructs.items())))
+    print(
+        "  %d item(s), instrument %s, store %s"
+        % (len(answers), record.instrument, path)
+    )
+    print(
+        "  constructs: %s"
+        % ", ".join("%s %+.2f" % (k, v) for k, v in sorted(record.constructs.items()))
+    )
     return 0
 
 

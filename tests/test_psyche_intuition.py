@@ -11,8 +11,8 @@
 - Brier score is computed from resolutions only; with none it is None, not 0.0.
 - No threshold is recommended from too little evidence.
 """
+
 import inspect
-import sys
 from pathlib import Path
 
 import pytest
@@ -20,13 +20,25 @@ import pytest
 ROOT = Path(__file__).resolve().parents[1]
 # (bootstrap removed by publicize: the package is installed)
 
-from nurse_ratchet.psyche import intuition as I
-from nurse_ratchet.psyche.network import PersonNetwork
+from nurse_ratchet.psyche import intuition as I  # noqa: E402
+from nurse_ratchet.psyche.network import PersonNetwork  # noqa: E402
 
-BASE = {"threat_appraisal": 0.8, "avoidance": 0.7, "rumination": 0.6,
-        "arousal": 0.5, "approach": 0.05, "self_worth": -0.4}
-CALM = {"threat_appraisal": 0.05, "avoidance": 0.05, "rumination": 0.1,
-        "arousal": 0.1, "approach": 0.7, "self_worth": 0.5}
+BASE = {
+    "threat_appraisal": 0.8,
+    "avoidance": 0.7,
+    "rumination": 0.6,
+    "arousal": 0.5,
+    "approach": 0.05,
+    "self_worth": -0.4,
+}
+CALM = {
+    "threat_appraisal": 0.05,
+    "avoidance": 0.05,
+    "rumination": 0.1,
+    "arousal": 0.1,
+    "approach": 0.7,
+    "self_worth": 0.5,
+}
 
 
 def _index():
@@ -107,8 +119,9 @@ def test_partial_cues_ladder_recognise_then_trust():
     for _ in range(10):
         index.absorb(BASE, "threat-loop")
 
-    asked = {k: BASE[k] for k in
-             ("threat_appraisal", "avoidance", "rumination", "arousal")}
+    asked = {
+        k: BASE[k] for k in ("threat_appraisal", "avoidance", "rumination", "arousal")
+    }
     trusted = index.read_or_think(asked)
     assert trusted.prototype == "threat-loop"
     assert trusted.path == "intuition", trusted.to_dict()
@@ -133,7 +146,7 @@ def test_fast_path_is_cheaper_for_the_same_question():
     """The speed claim, measured here rather than asserted in a docstring."""
     index = _learned()
     for _ in range(20):
-        index.agreement(BASE)          # warm, then time the aggregate
+        index.agreement(BASE)  # warm, then time the aggregate
     fast_total = 0.0
     slow_total = 0.0
     for _ in range(100):
@@ -192,8 +205,11 @@ def test_threshold_is_recommended_once_the_data_supports_it():
     index = _learned()
     for _ in range(10):
         index.resolve(index.read(BASE), "right", correct=True)
-    index.resolve(index.read({"sleep_quality": 0.95, "social_support": 0.9}),
-                  "wrong", correct=False)
+    index.resolve(
+        index.read({"sleep_quality": 0.95, "social_support": 0.9}),
+        "wrong",
+        correct=False,
+    )
     report = index.recommend_threshold()
     assert report["resolved"] == 11
     assert report["threshold"] is not None
@@ -203,8 +219,7 @@ def test_artifact_round_trips():
     index = _learned()
     index.resolve(index.read(BASE), "right", correct=True)
     clone = I.IntuitionIndex.from_dict(index.to_dict(), index.network)
-    assert [p.name for p in clone.prototypes()] == \
-           [p.name for p in index.prototypes()]
+    assert [p.name for p in clone.prototypes()] == [p.name for p in index.prototypes()]
     assert clone.diagnostics()["resolved"] == index.diagnostics()["resolved"]
 
 
@@ -216,8 +231,18 @@ def test_resolution_ledger_is_bounded():
 
 
 def test_no_demographic_inputs_exist():
-    banned = ("sex", "gender", "race", "ethnic", "age", "income", "religion",
-              "nationality", "diagnosis", "disorder")
+    banned = (
+        "sex",
+        "gender",
+        "race",
+        "ethnic",
+        "age",
+        "income",
+        "religion",
+        "nationality",
+        "diagnosis",
+        "disorder",
+    )
     for name, fn in vars(I).items():
         if not inspect.isfunction(fn) or fn.__module__ != I.__name__:
             continue

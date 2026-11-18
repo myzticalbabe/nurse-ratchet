@@ -45,6 +45,7 @@ generalise by construction the way a trained model could, and it will miss any
 construction not in this list. It is a better instrument than a token list on the
 evidence available; it is not a validated one, and the README says so.
 """
+
 from __future__ import annotations
 
 import re
@@ -60,30 +61,73 @@ SELF, OTHER, UNKNOWN = "self", "other", "unknown"
 #: ends. Deliberately finite and phrase-level, because a terminal marker is close
 #: to a fixed idiom across registers.
 TERMINAL_MARKERS: Tuple[str, ...] = (
-    "then it's over", "then its over", "then it is over", "and then it's over",
-    "after that i'm allowed", "after that i am allowed", "after that i'm done",
-    "after that i am done", "and then i'm done", "and then i am done",
-    "and then that's it", "and then that is it", "and that's it then",
-    "i just have to do the thing", "then i'm done", "then i am done",
-    "and i'm done", "that's the plan", "it is all arranged", "it's all arranged",
+    "then it's over",
+    "then its over",
+    "then it is over",
+    "and then it's over",
+    "after that i'm allowed",
+    "after that i am allowed",
+    "after that i'm done",
+    "after that i am done",
+    "and then i'm done",
+    "and then i am done",
+    "and then that's it",
+    "and then that is it",
+    "and that's it then",
+    "i just have to do the thing",
+    "then i'm done",
+    "then i am done",
+    "and i'm done",
+    "that's the plan",
+    "it is all arranged",
+    "it's all arranged",
 )
 
 #: Purpose/cause clauses. Their presence says the sentence is about continuing a
 #: life, not ending one. Absence earns the frame, presence spends it.
 BENIGN_CLAUSES: Tuple[str, ...] = (
-    "because the view", "because it's nice", "because it is nice", "because i like",
-    "so that i can", "so i can", "in order to", "for the deposit", "for the rent",
-    "for work", "for the interview", "for the bus", "for the school", "worth the",
-    "job hunting", "they've cancelled", "they have cancelled", "getting the",
+    "because the view",
+    "because it's nice",
+    "because it is nice",
+    "because i like",
+    "so that i can",
+    "so i can",
+    "in order to",
+    "for the deposit",
+    "for the rent",
+    "for work",
+    "for the interview",
+    "for the bus",
+    "for the school",
+    "worth the",
+    "job hunting",
+    "they've cancelled",
+    "they have cancelled",
+    "getting the",
 )
 
 #: Objects whose presence in a frame argues that the frame is about logistics:
 #: moving house, insurance, a commute. Every one of these appeared in a benign
 #: sentence that otherwise matched a risk frame exactly.
 LOGISTIC_OBJECTS: Tuple[str, ...] = (
-    "removals", "van", "boxes", "insurance", "deposit", "interview", "pension",
-    "bus", "job", "contract", "office", "hall", "tablets",
-    "doctor", "prescription", "landlord", "mortgage", "course",
+    "removals",
+    "van",
+    "boxes",
+    "insurance",
+    "deposit",
+    "interview",
+    "pension",
+    "bus",
+    "job",
+    "contract",
+    "office",
+    "hall",
+    "tablets",
+    "doctor",
+    "prescription",
+    "landlord",
+    "mortgage",
+    "course",
     # "school run" is deliberately NOT here. It is a TIME ANCHOR, and a time
     # anchor is what a plan is scheduled against, not evidence of what the plan is
     # for: "after the school run is easiest" and "after the school run is easiest
@@ -92,51 +136,127 @@ LOGISTIC_OBJECTS: Tuple[str, ...] = (
 
 #: Self-directed objects. A frame filled with one of these is about the speaker.
 SELF_OBJECTS: Tuple[str, ...] = (
-    "without me", "has me in it", "have me in it", "with me in", "me in it",
-    "keeping me", "kept me", "for me", "about me", "find me", "notice me",
-    "who gets", "gets the dog", "gets the", "one less person",
+    "without me",
+    "has me in it",
+    "have me in it",
+    "with me in",
+    "me in it",
+    "keeping me",
+    "kept me",
+    "for me",
+    "about me",
+    "find me",
+    "notice me",
+    "who gets",
+    "gets the dog",
+    "gets the",
+    "one less person",
 )
 
 #: Disposal and arrangement verbs. The frame is PREPARATION; the fill decides
 #: whether it is a will, a move, or a suicide note.
 DISPOSAL_VERBS: Tuple[str, ...] = (
-    "arranged", "sorted", "put", "written", "wrote", "posted", "post", "sent",
-    "sign", "signed", "packed", "packed up", "given away", "giving away",
-    "tidied", "cleared", "cancelled", "closed", "transferred", "done",
+    "arranged",
+    "sorted",
+    "put",
+    "written",
+    "wrote",
+    "posted",
+    "post",
+    "sent",
+    "sign",
+    "signed",
+    "packed",
+    "packed up",
+    "given away",
+    "giving away",
+    "tidied",
+    "cleared",
+    "cancelled",
+    "closed",
+    "transferred",
+    "done",
 )
 
 #: Artifacts that appear in both registers and are therefore only meaningful with
 #: a slot fill or a terminal marker.
 ARTIFACTS: Tuple[str, ...] = (
-    "letters", "letter", "note", "accounts", "will", "drawer", "things",
-    "stuff", "dog", "flat", "house", "keys", "phone",
+    "letters",
+    "letter",
+    "note",
+    "accounts",
+    "will",
+    "drawer",
+    "things",
+    "stuff",
+    "dog",
+    "flat",
+    "house",
+    "keys",
+    "phone",
 )
 
 #: Means-acquisition verbs. Deliberately paired with an UNSPECIFIED object.
 MEANS_VERBS: Tuple[str, ...] = (
-    "looking up", "looked up", "reading up", "read up", "worked out",
-    "working out", "found out", "know the number", "know how much",
-    "how much it takes", "how much of this", "how many it takes",
+    "looking up",
+    "looked up",
+    "reading up",
+    "read up",
+    "worked out",
+    "working out",
+    "found out",
+    "know the number",
+    "know how much",
+    "how much it takes",
+    "how much of this",
+    "how many it takes",
 )
 
 #: Places and means a person rehearses. A bare mention is not enough: the frame
 #: needs a rehearsal verb or a temporal intensifier to count.
 MEANS_OBJECTS: Tuple[str, ...] = (
-    "bridge", "drawer", "razor", "blade", "rope", "pills", "tablets", "gun",
-    "train", "car park", "multi-storey", "ledge", "roof",
+    "bridge",
+    "drawer",
+    "razor",
+    "blade",
+    "rope",
+    "pills",
+    "tablets",
+    "gun",
+    "train",
+    "car park",
+    "multi-storey",
+    "ledge",
+    "roof",
     # "practising what I'd write" rehearses the note itself, which is a rehearsal
     # even though no artifact noun appears.
-    "what i'd write", "what i would write", "the note", "the letter",
-    "about the drawer", "about the bridge",
+    "what i'd write",
+    "what i would write",
+    "the note",
+    "the letter",
+    "about the drawer",
+    "about the bridge",
 )
 
 #: Rehearsal markers.
 REHEARSAL_MARKERS: Tuple[str, ...] = (
-    "keep thinking about", "keep going over", "every drive home", "on my way home",
-    "think about", "thinking about", "every night", "every single night",
-    "practising", "practicing", "picturing",
-    "picturing it", "imagining", "slow down on the", "slow down at the",
-    "not stopping, just noticing", "just noticing",
+    "keep thinking about",
+    "keep going over",
+    "every drive home",
+    "on my way home",
+    "think about",
+    "thinking about",
+    "every night",
+    "every single night",
+    "practising",
+    "practicing",
+    "picturing",
+    "picturing it",
+    "imagining",
+    "slow down on the",
+    "slow down at the",
+    "not stopping, just noticing",
+    "just noticing",
 )
 
 #: Foreclosure markers: a deadline after which the speaker's own participation ends.
@@ -145,17 +265,31 @@ FORECLOSURE_MARKERS: Tuple[str, ...] = (
     # is a work complaint, and a bare noun is exactly the kind of marker that made
     # the earlier mechanisms look effective on the phrasings they were built from.
     # Foreclosure is X BEING the deadline: the copula is the construction.
-    "is the deadline", "after that i'm allowed", "give it until",
-    "until my birthday", "told myself", "no version of", "nothing about",
-    "i've stopped picturing", "have stopped picturing", "stopped picturing",
-    "not in it", "hasn't me", "has me in it", "has me in",
+    "is the deadline",
+    "after that i'm allowed",
+    "give it until",
+    "until my birthday",
+    "told myself",
+    "no version of",
+    "nothing about",
+    "i've stopped picturing",
+    "have stopped picturing",
+    "stopped picturing",
+    "not in it",
+    "hasn't me",
+    "has me in it",
+    "has me in",
 )
 
 #: Tether markers: an explicit reason to stay alive. Genuinely ambiguous -- it is
 #: protective AND it is the sentence a person says when the tether is all there is.
 TETHER_MARKERS: Tuple[str, ...] = (
-    "only thing keeping me", "only reason i'm here", "only reason i am here",
-    "keeping me here", "keeping me on this side", "keeping me alive",
+    "only thing keeping me",
+    "only reason i'm here",
+    "only reason i am here",
+    "keeping me here",
+    "keeping me on this side",
+    "keeping me alive",
     "one thing stopping me",
 )
 
@@ -163,10 +297,22 @@ TETHER_MARKERS: Tuple[str, ...] = (
 #: them yet" is the whole difference between a to-do list and a preparation
 #: narrative, and it is a SEQUENCE fact rather than a vocabulary one.
 WITHHELD_MARKERS: Tuple[str, ...] = (
-    "not posted", "not sent", "haven't posted", "have not posted", "haven't sent",
-    "have not sent", "not signed", "haven't signed", "have not signed",
-    "not delivered", "not given", "haven't given", "not handed",
-    "not written", "haven't written", "have not written",
+    "not posted",
+    "not sent",
+    "haven't posted",
+    "have not posted",
+    "haven't sent",
+    "have not sent",
+    "not signed",
+    "haven't signed",
+    "have not signed",
+    "not delivered",
+    "not given",
+    "haven't given",
+    "not handed",
+    "not written",
+    "haven't written",
+    "have not written",
 )
 
 #: Burden markers. Each REQUIRES a self object ("without me"), because "without my
@@ -193,8 +339,12 @@ class Frame:
     evidence: str
 
     def to_dict(self) -> Dict[str, object]:
-        return {"name": self.name, "subject": self.subject,
-                "weight": round(self.weight, 3), "evidence": self.evidence}
+        return {
+            "name": self.name,
+            "subject": self.subject,
+            "weight": round(self.weight, 3),
+            "evidence": self.evidence,
+        }
 
 
 @dataclass
@@ -234,9 +384,12 @@ class ConstructionReport:
         return self.score >= CONSTRUCTION_THRESHOLD
 
     def to_dict(self) -> Dict[str, object]:
-        return {"score": self.score, "fires": self.fires,
-                "frames": [f.to_dict() for f in self.frames],
-                "suppressed": list(self.suppressed)}
+        return {
+            "score": self.score,
+            "fires": self.fires,
+            "frames": [f.to_dict() for f in self.frames],
+            "suppressed": list(self.suppressed),
+        }
 
 
 #: Threshold a self-subject construction must reach. Each frame carries its own
@@ -245,13 +398,13 @@ CONSTRUCTION_THRESHOLD = 1.0
 
 #: Frames about the SELF that are strong enough to escalate alone.
 FRAME_WEIGHTS: Dict[str, float] = {
-    "future_absence": 2.0,   # no version of X has me in it
-    "preparation": 1.8,      # disposal + artifacts + terminal marker
-    "means_lookup": 2.0,     # how much it takes, know the number
-    "rehearsal": 1.5,        # the bridge, every drive home
-    "foreclosure": 1.5,      # deadline after which I am allowed
-    "tether": 1.2,           # the only thing keeping me here is X
-    "burden": 1.5,           # tidier without me
+    "future_absence": 2.0,  # no version of X has me in it
+    "preparation": 1.8,  # disposal + artifacts + terminal marker
+    "means_lookup": 2.0,  # how much it takes, know the number
+    "rehearsal": 1.5,  # the bridge, every drive home
+    "foreclosure": 1.5,  # deadline after which I am allowed
+    "tether": 1.2,  # the only thing keeping me here is X
+    "burden": 1.5,  # tidier without me
 }
 
 #: Sentence splitting is coarse on purpose: chat messages are full of fragments,
@@ -264,16 +417,19 @@ _SENTENCE_SPLIT = re.compile(r"(?<=[.!?])\s+|\n+")
 #: pronouns as subjects mis-attributes whole sentences.
 _CLAUSE_FIRST_PERSON = re.compile(
     r"(?:^|\b(?:and|but|so|then|because|honestly|when)\s+)"
-    r"(i|i'm|i've|i'd|i'll)\b|\b(my|myself)\b")
+    r"(i|i'm|i've|i'd|i'll)\b|\b(my|myself)\b"
+)
 _CLAUSE_THIRD_PERSON = re.compile(
     r"(?:^|\b(?:and|but|so|then|because|honestly|when)\s+)"
     r"(she|he|they|my\s+(?:sister|brother|mum|mother|father|son|daughter|friend|"
-    r"partner|wife|husband|client|patient)|a\s+(?:client|patient|friend)|someone)\b")
+    r"partner|wife|husband|client|patient)|a\s+(?:client|patient|friend)|someone)\b"
+)
 _FIRST_PERSON = re.compile(r"\b(i|i'm|i've|i'd|i'll|me|my|myself)\b")
 _THIRD_PERSON = re.compile(
     r"\b(she|he|they|her|his|their|my sister|my brother|my mum|my mother|"
     r"my father|my son|my daughter|my friend|my client|my patient|a client|"
-    r"a friend|someone)\b")
+    r"a friend|someone)\b"
+)
 
 
 def _has(text: str, needles: Sequence[str]) -> Optional[str]:
@@ -345,12 +501,15 @@ def _frames_for(sentence: str) -> List[Tuple[str, str, str]]:
     out: List[Tuple[str, str, str]] = []
 
     # 1. FUTURE_ABSENCE -- self is absent from a named future.
-    for pattern in (r"\bno (version of|part of)\b[^.]*\b(me|i)\b",
-                    r"\bnothing (about|in)\b[^.]*\b(me|i)\b",
-                    r"\b(don't|do not|can't|cannot) (see|picture|imagine) myself\b",
-                    r"\bstopped picturing\b",
-                    r"\bd(o|oes)n't have me\b",
-                    r"\bno future\b", r"\bnever be\b[^.]*\bagain\b"):
+    for pattern in (
+        r"\bno (version of|part of)\b[^.]*\b(me|i)\b",
+        r"\bnothing (about|in)\b[^.]*\b(me|i)\b",
+        r"\b(don't|do not|can't|cannot) (see|picture|imagine) myself\b",
+        r"\bstopped picturing\b",
+        r"\bd(o|oes)n't have me\b",
+        r"\bno future\b",
+        r"\bnever be\b[^.]*\bagain\b",
+    ):
         match = re.search(pattern, sentence)
         if match:
             out.append(("future_absence", match.group(0), SELF))
@@ -360,8 +519,9 @@ def _frames_for(sentence: str) -> List[Tuple[str, str, str]]:
     #    deposit takes" names its object and is not this frame.
     means = _has(sentence, MEANS_VERBS)
     if means:
-        if re.search(r"\b(how much|how many|what dose|the number|the timing)\b",
-                     sentence) and not _has(sentence, LOGISTIC_OBJECTS):
+        if re.search(
+            r"\b(how much|how many|what dose|the number|the timing)\b", sentence
+        ) and not _has(sentence, LOGISTIC_OBJECTS):
             out.append(("means_lookup", means, _subject(sentence, means)))
 
     # 4. REHEARSAL -- rehearsal verb or intensifier paired with a means/place.
@@ -397,7 +557,12 @@ def _frames_for(sentence: str) -> List[Tuple[str, str, str]]:
 #: exemption is bounded: a third-person marker in the same scope still wins, so
 #: "the film ends with her taking her own life" is not rescued by this rule.
 SELF_IMPLICIT_FRAMES: Tuple[str, ...] = (
-    "preparation", "means_lookup", "rehearsal", "foreclosure", "tether", "burden",
+    "preparation",
+    "means_lookup",
+    "rehearsal",
+    "foreclosure",
+    "tether",
+    "burden",
 )
 
 
@@ -444,16 +609,23 @@ def analyse(text: str) -> ConstructionReport:
             # custody allocation. A terminal marker does NOT get this override:
             # "it is all arranged" plus "the removals van" is a move, and the
             # marker is part of the logistics phrasing rather than against it.
-            if benign and name == "preparation" and benign in LOGISTIC_OBJECTS \
-                    and _has(scope, SELF_OBJECTS):
+            if (
+                benign
+                and name == "preparation"
+                and benign in LOGISTIC_OBJECTS
+                and _has(scope, SELF_OBJECTS)
+            ):
                 benign = None
             if benign:
                 report.suppressed.append(
-                    "%s in %r: benign marker %r" % (name, sentence[:60], benign))
+                    "%s in %r: benign marker %r" % (name, sentence[:60], benign)
+                )
                 continue
             if subject != SELF:
                 report.suppressed.append(
-                    "%s in %r: subject is %s, not the speaker" % (name, sentence[:60], subject))
+                    "%s in %r: subject is %s, not the speaker"
+                    % (name, sentence[:60], subject)
+                )
                 report.frames.append(Frame(name, subject, 0.0, evidence))
                 continue
             report.frames.append(Frame(name, subject, weight, evidence))
