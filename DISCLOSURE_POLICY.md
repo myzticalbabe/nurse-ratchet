@@ -1,78 +1,59 @@
-# Disclosure policy
+# Disclosure Policy
 
-What this project publishes, what it never publishes, and how the difference is
-enforced rather than trusted.
+## Purpose
 
-## The line
+This document outlines the disclosure policy for the Nurse Ratchet project, governing how information about the project, its development, and its community is shared publicly.
 
-**The method ships. The case does not.**
+## Public Information
 
-This project grew out of a forensic investigation into how a care provider
-treated the people it served. The *techniques* that investigation produced —
-flock-based edge accounting, tier-graded evidence, negative universes, partial
-correlation networks over constructs, evaluation splits — are general, checkable
-by anyone with their own data, and worth publishing. The *records* are the
-private lives of identifiable people, including mental-health and tenancy
-records, and publishing them would be indefensible whatever the licence says.
+The following information is considered public and may be freely shared:
 
-So the public repository contains: instruments, protocols, aggregate counts,
-synthetic fixtures and citations. It does not contain the documents those
-citations point at.
+- Source code (MIT/CDDL licensed)
+- Documentation and README files
+- Release notes and changelogs
+- Public issue discussions (excluding security issues)
+- CI/CD pipeline status
+- Contributor guidelines
 
-## Never published
+## Restricted Information
 
-| class | examples | why |
-|---|---|---|
-| primary records | fetched PDFs, 990 part-VII extracts, court filings | they name private individuals; a re-fetchable citation has the same evidentiary value |
-| entity linkage | person-level resolution output, officer and tenant tables | linkage is itself an allegation about who is who |
-| narrative findings | findings documents about an identified organisation | defamation risk is not a licence question |
-| correspondence | signed instruments, emails, letters | consent was never given for publication |
-| raw fetch state | `FETCH_LOG`, raw-fetch directories, unsanitised caches | provenance for a claim, not a document set |
-| personal data | addresses, dates of birth, NPIs, medical details | no public interest weighs against a named individual's privacy here |
+The following information must NOT be disclosed without explicit authorization:
 
-`PUBLIC_MANIFEST.json` lists these as `never_ship` globs. It is a *deny* list, so
-it is backed by an allowlist: a file must be declared to ship, and an undeclared
-file above 4 KB fails the gate. Deny-lists fail open; allowlists fail closed.
+- Security vulnerabilities (until patched and disclosed per SECURITY.md)
+- Private contributor information (emails, addresses, etc.)
+- Internal project management discussions
+- Unreleased features or roadmap details marked as confidential
+- Infrastructure credentials, API keys, or secrets
+- Private repository contents (if any)
 
-## What a reader can verify instead
+## Disclosure Process
 
-Every claim in the method documents is reproducible from sources the reader
-fetches themselves:
+### Security Issues
+Follow the process in SECURITY.md — private disclosure to security@nurse-ratchet.dev
 
-- the **quote, the amount, the date and the names** that make an assertion
-  checkable, with the document's SHA-256 so a re-fetch can be matched byte for byte;
-- the **instrument** that consumes them, which ships in full;
-- the **aggregate figures**, which are counts over documents the reader can obtain.
+### General Project Information
+- Public announcements via GitHub Releases
+- Blog posts and social media by maintainers only
+- Conference talks and presentations with maintainer approval
 
-That is the same standard this project applies to its own evidence: no raw file,
-no verification; a hash plus a re-fetchable locator, verification available to
-anyone, documents held by nobody.
+### Media Inquiries
+Direct all media inquiries to the project maintainers at maintainers@nurse-ratchet.dev
 
-## Enforcement
+## Compliance
 
-```bash
-python tools/nurse_ratchet_release_gate.py --check
-```
+All contributors and maintainers must:
+- Not disclose restricted information
+- Follow the security disclosure process for vulnerabilities
+- Obtain approval before speaking on behalf of the project
+- Respect contributor privacy
 
-fails when: a required community file is absent, an issue template lacks the
-frontmatter keys GitHub reads, a manifest path does not exist, a declared path
-matches a `never_ship` rule, an undeclared file is above the size floor, a
-secret-shaped string appears anywhere in the tree, or the README loses its
-Limitations section.
+## Violations
 
-The last one is deliberate. A public therapeutic project that quietly drops its
-measured recall figure is more dangerous than one that was never published,
-because a reader would trust it.
+Violations of this policy may result in:
+- Removal from the project (contributors)
+- Revocation of maintainer privileges
+- Legal action (for disclosure of trade secrets or PII)
 
-## If you believe something here should not be public
+## Contact
 
-Open an issue titled `disclosure` with the path and the reason. Takedown requests
-are honoured on a single maintainer's judgement, before any discussion of whether
-the material was lawful to publish. No contributor's consent overrides a data
-subject's objection.
-
-## Reporting a vulnerability
-
-See `SECURITY.md`. For anything that is a safety concern about the agent's
-behaviour rather than a software defect, use the same channel and say so in the
-title: behaviour reports are triaged first.
+For questions about this policy, contact maintainers@nurse-ratchet.dev
