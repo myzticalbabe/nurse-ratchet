@@ -1,58 +1,76 @@
-name: Feature request
-description: Propose a capability, with the measurement that would show it works and the control that would show it failing.
-title: "[feature] "
-labels: ["enhancement"]
+name: Feature Request
+description: Suggest a new feature for Nurse Ratchet
+title: "[FEATURE] "
+labels: ["feature", "triage"]
+assignees: []
 body:
   - type: markdown
     attributes:
       value: |
-        This project accepts a capability only with a test able to show it false.
-        A proposal without a falsification route will be answered with a request
-        for one, not with a rejection.
-  - type: dropdown
-    id: layer
+        Thanks for suggesting a feature! Please describe your idea below.
+
+  - type: textarea
+    id: problem
     attributes:
-      label: Which layer
-      description: Dependencies run top to bottom; a change low in the stack affects everything above it.
-      options:
-        - traits / affect
-        - network (construct graph)
-        - intuition (compiled inference)
-        - rt_agent (the loop)
-        - rt_channel (transport)
-        - instruments (evaluation, gates)
-        - documentation
+      label: Problem Statement
+      description: What problem does this feature solve?
+      placeholder: I'm frustrated when...
     validations:
       required: true
+
   - type: textarea
-    id: claim
+    id: solution
     attributes:
-      label: The falsifiable claim
-      description: Complete the sentence "after this change, X will be true of Y, and this test would catch it if it were not".
+      label: Proposed Solution
+      description: Describe the feature you'd like
+      placeholder: I'd like to see...
     validations:
       required: true
+
   - type: textarea
-    id: control
+    id: alternatives
     attributes:
-      label: The negative control
-      description: What input must NOT trigger the new behaviour, and what would a false pass look like?
-    validations:
-      required: true
-  - type: textarea
-    id: measurement
-    attributes:
-      label: How it will be measured
-      description: If this claims speed, safety or accuracy, name the two numbers and the machine.
+      label: Alternatives Considered
+      description: Other solutions you've considered
+      placeholder: I also thought about...
     validations:
       required: false
-  - type: checkboxes
-    id: scope
+
+  - type: textarea
+    id: use-cases
     attributes:
-      label: Scope checks
+      label: Use Cases
+      description: Specific scenarios where this would be useful
+      placeholder: |
+        1. When modeling person state...
+        2. For behavioral verification...
+    validations:
+      required: false
+
+  - type: dropdown
+    id: component
+    attributes:
+      label: Component
+      description: Which part of Nurse Ratchet does this affect?
       options:
-        - label: This does not require tuning against the holdout split.
+        - "Core person modeling"
+        - "Behavioral verification"
+        - "State machine"
+        - "CLI interface"
+        - "Documentation"
+        - "Testing infrastructure"
+        - "Other"
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Checklist
+      options:
+        - label: This feature aligns with Nurse Ratchet's scope (person state modeling)
           required: true
-        - label: This does not add a runtime dependency, or the issue explains why one is required.
-          required: true
-        - label: This does not publish evidence about identifiable people.
+        - label: I'm willing to implement this or help with implementation
+          required: false
+        - label: This doesn't introduce breaking changes without version bump
           required: true

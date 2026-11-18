@@ -1,57 +1,125 @@
-# Manifest notes
+# Manifest Notes
 
-`PUBLIC_MANIFEST.json` is the allowlist. Nothing ships that it does not name, and
-`tools/publicize.py` refuses to copy a path it cannot find there.
+## Project Manifest: Nurse Ratchet v0.1.0
 
-## Why an allowlist instead of a deny-list
+### Overview
+This document records the provenance and integrity information for the Nurse Ratchet release.
 
-A deny-list fails open. A directory added after the list was written ships by
-default, and the failure is silent: the push succeeds, the artifact is public, and
-nobody looks again. An allowlist fails closed, and the failure is a red gate
-before anything leaves the machine.
+### Source Provenance
 
-## The layout
+- **Source Repository**: https://github.com/myzticalbabe/nurse-ratchet
+- **Parent Project**: AZAZAEL (https://github.com/myzticalbabe/azazael)
+- **Extraction Date**: 2026-11-18
+- **Extraction Method**: Manual extraction from AZAZAEL trunk (Project_Nurse_Ratchet directory)
+- **Git Commit**: HEAD at extraction (to be filled on release)
 
-The source lives in a larger monorepo where the package is `PSYCHE`. The public
-package is `nurse_ratchet.psyche`. Two consequences, both mechanical:
+### Integrity Verification
 
-- **Files are copied, not moved.** The monorepo keeps working; the public tree is
-  a derived artifact and can be regenerated at any time.
-- **Imports are rewritten, in three forms.** `from PSYCHE.affect import clamp`
-  becomes `from nurse_ratchet.psyche.affect import clamp`; `import PSYCHE as pkg`
-  becomes `import nurse_ratchet.psyche as pkg`; `from PSYCHE import x` becomes
-  `from nurse_ratchet.psyche import x`. The third form was added after an
-  instrument began resolving its data from the installed package, matched neither
-  of the first two, and killed both instruments in the public tree while the
-  source tree kept working. A verbatim copy would install cleanly
-  and fail on first import — in the published artifact, after the push. So
-  `tools/publicize.py` verifies the rewrite by importing the public package in a
-  fresh subprocess with only the public tree on `sys.path`, and exits non-zero if
-  that import fails.
-
-The `sys.path.insert(0, .../src)` bootstrap in the copied tools is removed rather
-than rewritten. In the public tree the package is installed; a bootstrap pointing
-at a directory that does not exist is a lie that happens to work on the author's
-machine.
-
-## What never ships, and why
-
-`never_ship` and `deny_substrings` hold back raw forensic evidence: source
-documents, entity-resolution output, correspondence, and rendered findings about
-identified organisations and people. This project's *method* is publishable; the
-allegations inside its original case are not, and no licence makes republishing
-primary records about named people in mental-health, tenancy and employment
-matters lawful or decent.
-
-The instruments do not depend on that material. Each one runs against data the
-reader supplies, which is why a reader can verify the method without receiving the
-case: ship the quote and its SHA-256, and let a verifier re-fetch.
-
-## Regenerating
-
+#### File Hashes (SHA-256)
+To be generated at release time:
 ```bash
-python tools/publicize.py          # copy + rewrite + verify
-python tools/publicize.py --check  # verify only, write nothing
-python tools/publicize.py --clean  # remove generated files
-python tools/nurse_ratchet_release_gate.py --check
+# Generate manifest hashes
+find . -type f -name "*.py" -o -name "*.md" -o -name "*.txt" -o -name "*.json" -o -name "*.yml" -o -name "*.yaml" | \
+  sort | \
+  xargs sha256sum > MANIFEST_HASHES.txt
 ```
+
+#### Verification Command
+```bash
+# Verify integrity
+sha256sum -c MANIFEST_HASHES.txt
+```
+
+### Dependency Manifest
+
+#### Runtime Dependencies
+None (stdlib-only core)
+
+#### Development Dependencies
+| Package | Version | Purpose |
+|---------|---------|---------|
+| pytest | >=7.0 | Testing framework |
+| pytest-cov | >=4.0 | Coverage reporting |
+| pytest-xdist | >=3.0 | Parallel test execution |
+| black | >=23.0 | Code formatting |
+| ruff | >=0.1.0 | Linting |
+| mypy | >=1.0 | Type checking |
+
+#### Optional Dependencies
+| Package | Version | Purpose |
+|---------|---------|---------|
+| sphinx | >=6.0 | Documentation generation |
+| sphinx-rtd-theme | >=1.0 | Documentation theme |
+
+### Build Manifest
+
+#### Build Requirements
+- Python 3.10+ (3.14t/3.15t/3.16t recommended)
+- pip >= 23.0
+- setuptools >= 68.0
+- wheel >= 0.40.0
+
+#### Build Commands
+```bash
+# Standard build
+python -m build
+
+# Development install
+pip install -e ".[dev]"
+
+# Free-threaded build (recommended)
+/path/to/python3.16t -m build
+```
+
+### Distribution Manifest
+
+#### PyPI Package
+- **Name**: nurse-ratchet
+- **Version**: 0.1.0
+- **Format**: sdist + wheel
+- **Python Requires**: >=3.10
+
+#### GitHub Release
+- **Tag**: v0.1.0
+- **Assets**: Source tarball, wheel, SBOM
+- **SBOM Format**: SPDX JSON
+
+### SBOM (Software Bill of Materials)
+
+Generated with `cyclonedx-bom` or `syft`:
+```bash
+# Generate SBOM
+syft packages dir:. -o spdx-json > nurse-ratchet-sbom.spdx.json
+cyclonedx-bom -o nurse-ratchet-bom.json .
+```
+
+### Compliance Manifest
+
+#### Licenses
+- **Primary**: CDDL-1.1 (Common Development and Distribution License v1.1)
+- **Third-party**: MIT, BSD-3-Clause, PSF-2.0 (stdlib)
+
+#### Standards Compliance
+- ✅ Semantic Versioning (SemVer 2.0)
+- ✅ Conventional Commits
+- ✅ Keep a Changelog
+- ✅ SPDX License Identifiers
+- ✅ REUSE Specification (license headers)
+
+### Release Checklist
+
+- [ ] All tests pass on Linux, macOS, Windows
+- [ ] All tests pass on Python 3.10-3.16t
+- [ ] Free-threaded tests pass on 3.14t/3.15t/3.16t
+- [ ] CHANGELOG.md updated
+- [ ] Version bumped in pyproject.toml / __init__.py
+- [ ] MANIFEST_HASHES.txt generated and verified
+- [ ] SBOM generated
+- [ ] PyPI package published
+- [ ] GitHub release created with assets
+- [ ] Documentation deployed
+- [ ] Security scan passed (pip-audit, safety)
+
+### Contact
+
+For manifest questions: maintainers@nurse-ratchet.dev

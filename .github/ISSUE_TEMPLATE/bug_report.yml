@@ -1,60 +1,103 @@
-name: Bug report
-description: Something behaves differently from what the documentation, a test, or the source says it does.
-title: "[bug] "
-labels: ["bug"]
+name: Bug Report
+description: Report a bug in Nurse Ratchet
+title: "[BUG] "
+labels: ["bug", "triage"]
+assignees: []
 body:
   - type: markdown
     attributes:
       value: |
-        A bug is a disagreement between behaviour and a stated claim. Quote the
-        claim and the command that shows it failing.
-  - type: input
-    id: version
-    attributes:
-      label: Version or commit
-      description: Output of `git rev-parse --short HEAD`, or the release tag.
-    validations:
-      required: true
+        Thanks for reporting a bug! Please fill out the sections below.
+
   - type: textarea
-    id: expected
+    id: description
     attributes:
-      label: What was claimed
-      description: The docstring line, test name, README sentence or exit code that says otherwise.
+      label: Description
+      description: A clear and concise description of the bug
+      placeholder: What happened?
     validations:
       required: true
-  - type: textarea
-    id: actual
-    attributes:
-      label: What happened
-      description: Paste the command and its output. If a test fails, include the assertion line.
-      render: shell
-    validations:
-      required: true
+
   - type: textarea
     id: reproduction
     attributes:
-      label: Minimal reproduction
-      description: The smallest sequence that shows it. Pytest path is ideal.
+      label: Steps to Reproduce
+      description: Steps to reproduce the behavior
+      placeholder: |
+        1. Go to '...'
+        2. Click on '....'
+        3. Scroll down to '....'
+        4. See error
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected Behavior
+      description: What you expected to happen
+      placeholder: What should have happened?
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual Behavior
+      description: What actually happened
+      placeholder: What happened instead?
+    validations:
+      required: true
+
+  - type: input
+    id: python-version
+    attributes:
+      label: Python Version
+      description: Output of `python --version`
+      placeholder: "3.16.0a1 free-threading build"
+    validations:
+      required: true
+
+  - type: input
+    id: os
+    attributes:
+      label: Operating System
+      description: OS and version
+      placeholder: "Ubuntu 24.04 / macOS 14 / Windows 11"
+    validations:
+      required: true
+
+  - type: input
+    id: nurse-version
+    attributes:
+      label: Nurse Ratchet Version
+      description: Version of Nurse Ratchet (from `pip show nurse-ratchet` or git tag)
+      placeholder: "0.1.0"
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs / Error Output
+      description: Paste any relevant logs, stack traces, or error messages
       render: shell
+      placeholder: |
+        $ python -m nurse_ratchet ...
+        Traceback (most recent call last):
+          ...
     validations:
-      required: true
-  - type: dropdown
-    id: safety
-    attributes:
-      label: Can this harm a person using the software?
-      description: If yes, stop and read SECURITY.md - behavioural safety reports are triaged privately and first.
-      options:
-        - "No - ordinary defect"
-        - "Possibly - weakens the crisis routing or leaks state"
-        - "Yes - I have read SECURITY.md and will report privately"
-    validations:
-      required: true
+      required: false
+
   - type: checkboxes
-    id: checks
+    id: checklist
     attributes:
-      label: Before submitting
+      label: Checklist
+      description: Confirm the following
       options:
-        - label: I searched existing issues.
+        - label: I have searched existing issues for duplicates
           required: true
-        - label: This report contains no real person's data.
+        - label: I have tested on the latest main branch
           required: true
+        - label: I have provided a minimal reproduction case
+          required: false

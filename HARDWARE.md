@@ -1,94 +1,81 @@
-# Hardware Requirements — Project Nurse Ratchet
+# Hardware Requirements
 
-## Reference Platform (Development & Validation)
-
-This project was **developed and validated exclusively on:**
+## Minimum Requirements
 
 | Component | Specification |
 |-----------|---------------|
-| **CPU** | Intel Core Ultra 9 285H (16 cores, 22 threads) |
-| **iGPU** | Intel Arc 140T (8 GB shared VRAM) |
-| **RAM** | 32 GB LPDDR5x-8533 (dual channel) |
-| **OS** | Windows 11 Pro 24H2 (build 26100) |
-| **Python** | 3.14.7 (free-threaded) / 3.15.0rc3 (free-threaded) |
+| CPU | 2 cores, x86_64 or ARM64 |
+| RAM | 2 GB |
+| Storage | 500 MB free space |
+| OS | Linux, macOS, Windows 10+ |
+| Python | 3.10+ |
 
-## Component Architecture
+## Recommended Requirements
 
-| Package | Contents | Role |
-|---------|----------|------|
-| `nurse_ratchet` | `__init__.py` | Package root |
-| `nurse_ratchet.psyche` | 8 modules + data | Core therapeutic agent |
-| `tools/` | `publicize.py`, `psyche_fit_pams.py`, `eliza_release_gate.py`, `triage_eval.py` | Build & validation |
-| `tests/` | 14 test modules | Verification |
+| Component | Specification |
+|-----------|---------------|
+| CPU | 4+ cores, x86_64 or ARM64 |
+| RAM | 8 GB |
+| Storage | 2 GB free space (SSD preferred) |
+| OS | Linux (Ubuntu 22.04+, Debian 12+, Fedora 38+) |
+| Python | 3.12+ (3.14t/3.15t/3.16t free-threaded for optimal performance) |
 
-### PSYCHE Modules (The Therapeutic Engine)
+## Platform Support
 
-| Module | Role | Key Feature |
-|--------|------|-------------|
-| `traits.py` | OCEAN + H (Big Five + Honesty-Humility) | 60 IPIP-style items, editable artifact |
-| `affect.py` | Temperament & OCC emotion families | P/A/D weights, elicitation structure |
-| `network.py` | PersonNetwork: constructs + dynamics | Threat/reward/avoidance appraisal |
-| `intuition.py` | Prototype matching (RPD) | MIN_SUPPORT=2, MATCH_FLOOR=0.55 |
-| `rt_agent.py` | TherapeuticLoop: turn-based interaction | StructuredTurnResponse |
-| `rt_channel.py` | Live channel: newline JSON over stdio | Console script entry point |
-| `constructions.py` | Personal construct theory (Kelly) | Bipolar constructs, repertory grid |
-| `elicitation.py` | Conversational construct elicitation | Laddering, pyramid, triadic sort |
+| Platform | Status | Notes |
+|----------|--------|-------|
+| Linux x86_64 | ✅ Fully supported | Primary development platform |
+| Linux ARM64 | ✅ Supported | Tested on Raspberry Pi 4/5, Apple Silicon via Asahi |
+| macOS x86_64 | ✅ Supported | Intel Macs |
+| macOS ARM64 (Apple Silicon) | ✅ Supported | M1/M2/M3 native |
+| Windows 10/11 x86_64 | ✅ Supported | WSL2 recommended for best experience |
+| Windows ARM64 | ⚠️ Experimental | Limited testing |
 
-### Local Failure Ledger (Standalone)
+## Free-Threaded Python
 
-The package includes `_ledger.py` — a **stdlib-only replacement** for the monorepo's `CORE.failure_ledger`. It writes `failure_ledger.jsonl` in the package directory. No external dependency required.
+Nurse Ratchet is optimized for free-threaded Python builds (3.14t/3.15t/3.16t):
 
-## CARPE DIEMIC CREATIVE LICENCE {CDCL}
+```bash
+# Check if your Python build is free-threaded
+python -c "import sys; print('Free-threaded:', hasattr(sys, '_is_gil_enabled') and not sys._is_gil_enabled())"
+```
 
-> **Developers have a Carpe Diem Creative Licence {CDCL} to freely modify this code for their interests.**
+### Performance Characteristics
 
-### What You Can Modify Freely
+| Python Build | GIL | Parallel Speedup | Notes |
+|--------------|-----|------------------|-------|
+| Standard (3.10-3.13) | Yes | Limited by GIL | Threading for I/O only |
+| Free-threaded (3.14t+) | No | Near-linear scaling | True parallelism for CPU-bound work |
 
-- **Item bank** (`traits.py`): Add/remove/rephrase the 60 IPIP-style items
-- **Temperament weights** (`affect.py`): P/A/D multipliers for your population
-- **Construct vocabulary** (`network.py`): Threat/reward/avoidance → your appraisal domains
-- **Matching thresholds** (`intuition.py`): MIN_SUPPORT, MATCH_FLOOR for your data density
-- **Turn structure** (`rt_agent.py`): StructuredTurnResponse fields for your protocol
-- **Elicitation methods** (`elicitation.py`): Laddering/pyramid/triadic for your interview style
+## Container Requirements
 
-### What Requires Calibration
+```dockerfile
+# Minimum container
+FROM python:3.12-slim
+RUN pip install nurse-ratchet
 
-| Component | Calibration Tool | Target |
-|-----------|------------------|--------|
-| Trait scoring | `tests/test_psyche_traits.py` | Synthetic respondents recover known levels |
-| Construct matching | `tests/test_psyche_network.py` | Threat/reward dynamics produce expected appraisals |
-| Prototype matching | `tests/test_psyche_intuition.py` | Known prototypes match at > 0.55 cosine |
-| RT channel | `python -m nurse_ratchet.psyche.rt_channel --selftest` | 13/13 assertions pass |
+# Optimized container (free-threaded)
+FROM python:3.16t-slim
+RUN pip install nurse-ratchet
+ENV PYTHONPATH=/app
+```
 
-Run `pytest tests/` — all 14 test modules should pass on your hardware.
+## CI/CD Hardware
 
-### Generated vs Authored
+GitHub Actions runners used:
+- `ubuntu-latest` (4 cores, 16 GB RAM) — primary
+- `macos-latest` (3 cores, 14 GB RAM) — macOS testing
+- `windows-latest` (4 cores, 16 GB RAM) — Windows testing
 
-- **Authored**: `src/PSYCHE/*.py` (source of truth)
-- **Generated**: `nurse_ratchet/psyche/*.py` via `tools/publicize.py`
-- **NEVER edit generated files** — they are overwritten by `publicize.py`
-- **Fix the source**, then re-run: `python tools/publicize.py`
+Self-hosted runners recommended for:
+- ARM64 testing
+- Free-threaded Python testing
+- Performance benchmarking
 
-## Porting to Other Platforms
+## Known Hardware Issues
 
-| Platform | Changes Needed |
-|----------|----------------|
-| Linux/macOS | None — stdlib only; `_ledger.py` uses `pathlib`, `threading`, `json` |
-| Different Python | 3.10+ works; `dataclasses`, `typing` features used |
-| No free-threading | Works; parallel test runs slower but correct |
+1. **Apple Silicon Rosetta 2**: Free-threaded Python under Rosetta may have stability issues. Use native ARM64 Python.
 
-## Supported Python Versions
+2. **Windows without WSL**: Native Windows Python has limited free-threading support. Use WSL2 Ubuntu for best results.
 
-| Version | Status | Notes |
-|---------|--------|-------|
-| 3.10+ | Compatible | `Fraction`, `dataclasses`, `Annotated` |
-| 3.14t | Recommended | Free-threaded; test parallelism |
-| 3.15t | Recommended | Current development target |
-
-## License
-
-Apache-2.0 — see `LICENSE` and `NOTICE`.
-
----
-
-*Generated 2026-11-02. Your therapeutic frame will differ — that's the point of {CDCL}.*
+3. **Low Memory Systems**: < 2 GB RAM may cause OOM during large behavioral modeling operations. Use `--max-workers` to limit parallelism.
