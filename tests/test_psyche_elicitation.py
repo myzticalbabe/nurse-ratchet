@@ -27,7 +27,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "tools"))
 
 from nurse_ratchet.psyche import elicitation  # noqa: E402
-from nurse_ratchet.psyche.elicitation import (
+from nurse_ratchet.psyche.elicitation import (  # noqa: E402
     ITEMS,
     INSTRUMENT_VERSION,
     IncompleteSession,  # noqa: E402

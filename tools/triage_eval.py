@@ -40,7 +40,7 @@ from typing import Dict, List, Optional
 ROOT = Path(__file__).resolve().parents[1]
 # (bootstrap removed by publicize: the package is installed)
 
-from nurse_ratchet.psyche.rt_agent import (
+from nurse_ratchet.psyche.rt_agent import (  # noqa: E402
     triage,
 )  # noqa: E402  (path set above, deliberately)
 import nurse_ratchet.psyche as _psyche_pkg  # noqa: E402

@@ -15,7 +15,7 @@ import pytest
 ROOT = Path(__file__).resolve().parents[1]
 # (bootstrap removed by publicize: the package is installed)
 
-from nurse_ratchet.psyche.traits import (
+from nurse_ratchet.psyche.traits import (  # noqa: E402
     DOMAINS,
     FACETS,
     ITEMS,
