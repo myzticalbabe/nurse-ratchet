@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "description": "Nurse Ratchet: Behavioral Package for Person State Modeling extracted from AZAZAEL",
   "repository": "https://github.com/myzticalbabe/nurse-ratchet",
-  "license": "CDDL-1.1",
+  "license": "LicenseRef-SoulForge-1.0",
   "authors": [
     {
       "name": "Azazael Contributors",
